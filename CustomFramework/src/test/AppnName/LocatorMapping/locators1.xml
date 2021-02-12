@@ -1,0 +1,24 @@
+<elements>
+
+	<!-- Home Page -->
+
+	<element name="homepage-from" locator="//input[@id='gosuggest_inputSrc']"/>
+	<element name="homepage-to" locator="//input[@id='gosuggest_inputDest']"/>
+	<element name="from-autosuggest" locator="react-autosuggest-1"/>
+	
+	
+	
+	<element name="departureCalendar" locator="//input[@id='departureCalendar']"/>
+	<element name="calendar-displaytext" locator="//div[@class='DayPicker-Caption']"/>
+	<element name="returnCalendar" locator="//input[@id='returnCalendar']"/>
+	<element name="calendar-displaytext" locator="//div[@class='DayPicker-Caption']"/>
+	
+	
+	
+	
+
+
+
+
+
+</elements>

@@ -1,0 +1,12 @@
+<elements>
+
+	<!-- Home Page -->
+
+	<element name="homepage-from" >//input[@id='gosuggest_inputSrc']</element>
+	<element  name="homepage-to" >//input[@id='gosuggest_inputDest']</element>
+
+
+
+
+
+</elements>
