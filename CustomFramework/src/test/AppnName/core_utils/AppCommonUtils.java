@@ -5,6 +5,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -46,10 +49,21 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.relevantcodes.extentreports.ExtentReports;
+import com.relevantcodes.extentreports.ExtentTest;
+import com.relevantcodes.extentreports.LogStatus;
+
 public class AppCommonUtils {
 
+	/**
+	 * @author Faiz-Siddiqh
+	 * 
+	 */
 	private static Properties properties = new Properties();
 	private static WebDriver driver;
+	private static ExtentReports extentreport;
+	private static ExtentTest test;
+	public static String className;
 
 	public static class ProjectProperties {
 
@@ -90,6 +104,84 @@ public class AppCommonUtils {
 			driver.manage().window().maximize();
 			driver.get(url);
 			driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+		}
+
+		public static void setClassName(String className) {
+			AppCommonUtils.className = className;
+		}
+
+		public static void getExtentReportInstance() {
+
+			String path = System.getProperty("user.dir") + "//TestResults//" + className;
+			File resultsFile = new File(path);
+			if (resultsFile.exists() && resultsFile.isDirectory()) {
+				resultsFile.delete();
+			}
+			resultsFile.mkdir();
+			extentreport = new ExtentReports(path + "//" + "ExtentReport.html", false);
+			extentreport.addSystemInfo("Selenium Version", "3.141.59").addSystemInfo("Platform", "Windows");
+			// extent.addSystemInfo("Selenium Version",
+			// "3.141.59").addSystemInfo("Platform", System.getProperty("os.name"));
+			test = extentreport.startTest("Test Started.Initialising driver.");
+			// return extent;
+		}
+
+		public static ExtentTest getExtentTest() {
+			return test;
+		}
+
+		public void logInfo(String log) {
+			test.log(LogStatus.INFO, log);
+		}
+
+		public static String getMonth(String monthNo) {
+
+			String monthName = null;
+
+			int month = Integer.parseInt(monthNo);
+
+			switch (month) {
+
+			case 1:
+				monthName = "January";
+				break;
+
+			case 2:
+				monthName = "February";
+				break;
+			case 3:
+				monthName = "March";
+				break;
+			case 4:
+				monthName = "April";
+				break;
+			case 5:
+				monthName = "May";
+				break;
+			case 6:
+				monthName = "June";
+				break;
+			case 7:
+				monthName = "July";
+				break;
+			case 8:
+				monthName = "August";
+				break;
+			case 9:
+				monthName = "September";
+				break;
+			case 10:
+				monthName = "October";
+				break;
+			case 11:
+				monthName = "November";
+				break;
+			case 12:
+				monthName = "December";
+				break;
+
+			}
+			return monthName;
 		}
 
 	}
@@ -167,8 +259,40 @@ public class AppCommonUtils {
 //			}
 	}
 
+	public static class Screenshot {
+
+		public static void takeScreenshot(String fileName) throws Exception {
+
+			String path = System.getProperty("user.dir") + "//TestResults//" + className;
+			String fullPath = path + "//" + fileName + ".png";
+			File sourceFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+			FileUtils.copyFile(sourceFile, new File(fullPath));
+			test.addScreenCapture(fullPath);
+			test.log(LogStatus.FAIL, "Test Failed", fullPath);
+
+			driver.quit();
+			extentreport.endTest(test);
+			extentreport.flush();
+
+		}
+
+		public static String getRandomString(int length) {
+			StringBuilder sb = new StringBuilder();
+			String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+
+			for (int i = 0; i < str.length(); i++) {
+				int index = (int) (Math.random() * str.length());
+				sb.append(str.charAt(index));
+			}
+
+			return sb.toString();
+		}
+	}
+
 	public static void setUp() throws SAXException, IOException {
 		setUpDriverAndLocatorsFile();
+		// setting up an extent report
+		common.getExtentReportInstance();
 
 	}
 
@@ -224,6 +348,117 @@ public class AppCommonUtils {
 		 */
 
 		locators.setUpLocatorsFile("locatorsfile");
+	}
+
+	public static WebElement getElement(String locator, String type) {
+
+		type = type.toLowerCase();
+
+		if (type.equals("id")) {
+			return driver.findElement(By.id(locator));
+		} else if (type.equals("xpath")) {
+			return driver.findElement(By.xpath(locator));
+		} else if (type.equals("cssselector")) {
+			return driver.findElement(By.cssSelector(locator));
+		} else if (type.equals("name")) {
+			return driver.findElement(By.name(locator));
+		} else if (type.equals("classname")) {
+			return driver.findElement(By.className(locator));
+		} else if (type.equals("tagname")) {
+			return driver.findElement(By.tagName(locator));
+		} else if (type.equals("linktext")) {
+			return driver.findElement(By.linkText(locator));
+		} else {
+			System.out.println("Locator not supported or check type");
+			return null;
+
+		}
+	}
+
+	public static WebElement getElementByXpath(String locator) {
+
+		return driver.findElement(By.xpath(locator));
+	}
+
+	public static List<WebElement> getElementsByTagname(WebElement element, String tagname) {
+
+		return element.findElements(By.tagName(tagname));
+
+	}
+
+	public static List<WebElement> getElements(String locator, String type) {
+
+		type = type.toLowerCase();
+
+		if (type.equals("id")) {
+			return driver.findElements(By.id(locator));
+		} else if (type.equals("xpath")) {
+			return driver.findElements(By.xpath(locator));
+		} else if (type.equals("cssselector")) {
+			return driver.findElements(By.cssSelector(locator));
+		} else if (type.equals("name")) {
+			return driver.findElements(By.name(locator));
+		} else if (type.equals("classname")) {
+			return driver.findElements(By.className(locator));
+		} else if (type.equals("tagname")) {
+			return driver.findElements(By.tagName(locator));
+		} else if (type.equals("linktext")) {
+			return driver.findElements(By.linkText(locator));
+		} else {
+			System.out.println("Locator not supported or check type");
+			return null;
+
+		}
+
+	}
+
+	public static void findElementAndClick(List<WebElement> list, String requiredText) {
+
+		for (WebElement eachElement : list) {
+			if (eachElement.getText().contains(requiredText)) {
+				clickAndWait(eachElement);
+				break;
+			}
+		}
+
+	}
+
+	public static void clickAndWait(WebElement element) {
+		element.click();
+		driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+	}
+
+	public static void clickAndTypeAndWait(WebElement element, String keysToSend) {
+
+		clickAndWait(element);
+		element.sendKeys(keysToSend);
+		driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+	}
+
+	public static void dragAndDrop(WebElement fromElement, WebElement toElement) {
+
+		Actions action = new Actions(driver);
+		// 1)
+		action.dragAndDrop(fromElement, toElement).build().perform();
+
+		/*
+		 * 2)
+		 * action.clickAndHold(fromElement).moveToElement(toElement).build().perform();
+		 */
+	}
+
+	public static void slider(WebElement sliderElement, int xOffset, int yOffset) {
+
+		Actions action = new Actions(driver);
+
+		action.dragAndDropBy(sliderElement, xOffset, yOffset).perform();
+	}
+
+	public static void selectFromDropdown(WebElement element, String textToBeSelected) {
+
+		Select select = new Select(element);
+		select.selectByVisibleText(textToBeSelected);
+
 	}
 
 }
