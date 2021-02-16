@@ -33,6 +33,7 @@ import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.tools.ant.util.DateUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
@@ -93,17 +94,33 @@ public class AppCommonUtils {
 	public static class common {
 
 		public static void appLogin() {
-
-			String url = ProjectProperties.readFromGlobalConfigFile("URL");
-			launch(url);
+			try {
+				String url = ProjectProperties.readFromGlobalConfigFile("URL");
+				launch(url);
+			} catch (Exception e) {
+				logInfo(e.getMessage());
+				cleanUp();
+			}
 
 		}
 
 		public static void launch(String url) {
+			try {
+				if (driver == null) {
+					AppCommonUtils.setUpDriver();
+				}
 
-			driver.manage().window().maximize();
-			driver.get(url);
-			driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+				driver.manage().window().maximize();
+				logInfo("Maximizing the window");
+				driver.get(url);
+				logInfo("Navigating to " + url);
+				driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+				logInfo("fetching url");
+
+			} catch (Exception e) {
+				logInfo(e.getMessage());
+				cleanUp();
+			}
 		}
 
 		public static void setClassName(String className) {
@@ -122,15 +139,47 @@ public class AppCommonUtils {
 			extentreport.addSystemInfo("Selenium Version", "3.141.59").addSystemInfo("Platform", "Windows");
 			// extent.addSystemInfo("Selenium Version",
 			// "3.141.59").addSystemInfo("Platform", System.getProperty("os.name"));
-			test = extentreport.startTest("Test Started.Initialising driver.");
-			// return extent;
+
+		}
+
+		public static void cleanUp(String fileName) throws Exception {
+			common.logInfo("This Test Step failed, Capturing Screenshot.");
+			AppCommonUtils.Screenshot.takeScreenshot(fileName);
+			AppCommonUtils.common.getDriver().quit();
+			test.log(LogStatus.FAIL, "Test Failed");
+			AppCommonUtils.common.getExtentReport().endTest(test);
+			AppCommonUtils.common.getExtentReport().flush();
+		}
+
+		public static void cleanUp() {
+			common.logInfo("This Test Step failed, Capturing Screenshot.");
+			AppCommonUtils.Screenshot.takeScreenshot();
+			AppCommonUtils.common.getDriver().quit();
+			test.log(LogStatus.FAIL, "Test Failed");
+			AppCommonUtils.common.getExtentReport().endTest(test);
+			AppCommonUtils.common.getExtentReport().flush();
+		}
+
+		public static ExtentReports getExtentReport() {
+			return extentreport;
+		}
+
+		public static WebDriver getDriver() {
+			return driver;
+		}
+
+		public static void setExtentTest(String testName) {
+			test = extentreport.startTest(testName);
+			test.log(LogStatus.INFO, "Setting log report");
+			test.log(LogStatus.INFO, "Starting Test-" + testName);
+
 		}
 
 		public static ExtentTest getExtentTest() {
 			return test;
 		}
 
-		public void logInfo(String log) {
+		public static void logInfo(String log) {
 			test.log(LogStatus.INFO, log);
 		}
 
@@ -214,21 +263,24 @@ public class AppCommonUtils {
 		}
 
 		public static String getLocator(String locatorname) {
-
+			String locator = null;
 			try {
 				expr = xpath.compile("//element[@name='" + locatorname + "']/@*");
 				NodeList result = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-
+				common.logInfo("Get Locator for " + locatorname);
 				Attr attr = (Attr) result.item(0);
-				return attr.getNodeValue();
+				locator = attr.getNodeValue();
+				common.logInfo("Get Locator successful- " + locator);
 				// return attr.getTextContent();
 
 			} catch (XPathExpressionException e) {
-				System.out.println("check the locatorname input value");
+				// System.out.println("check the locatorname input value");
+				common.logInfo(e.getMessage());
+				AppCommonUtils.common.cleanUp();
 				e.printStackTrace();
 			}
 
-			return null;
+			return locator;
 		}
 
 		/*
@@ -265,14 +317,27 @@ public class AppCommonUtils {
 
 			String path = System.getProperty("user.dir") + "//TestResults//" + className;
 			String fullPath = path + "//" + fileName + ".png";
+			test.log(LogStatus.INFO, "capturing Screenshot");
 			File sourceFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 			FileUtils.copyFile(sourceFile, new File(fullPath));
 			test.addScreenCapture(fullPath);
 			test.log(LogStatus.FAIL, "Test Failed", fullPath);
 
-			driver.quit();
-			extentreport.endTest(test);
-			extentreport.flush();
+		}
+
+		public static void takeScreenshot() {
+
+			String path = System.getProperty("user.dir") + "//TestResults//" + className;
+			String fullPath = path + "//" + getRandomString(5) + ".png";
+			File sourceFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+			test.log(LogStatus.INFO, "capturing Screenshot");
+			try {
+				FileUtils.copyFile(sourceFile, new File(fullPath));
+			} catch (Exception e) {
+				test.log(LogStatus.WARNING, e.getMessage());
+			}
+			test.addScreenCapture(fullPath);
+			test.log(LogStatus.FAIL, "Test Failed", fullPath);
 
 		}
 
@@ -290,13 +355,18 @@ public class AppCommonUtils {
 	}
 
 	public static void setUp() throws SAXException, IOException {
-		setUpDriverAndLocatorsFile();
+
 		// setting up an extent report
 		common.getExtentReportInstance();
+		setUpDriver();
+		/*
+		 * Setting up Locators File
+		 */
+		locators.setUpLocatorsFile("locatorsfile");
 
 	}
 
-	public static void setUpDriverAndLocatorsFile() {
+	public static void setUpDriver() {
 		// Load the properties file using this method which contains baseURL and
 		// WebDriverType
 		String driverLocation;
@@ -343,103 +413,182 @@ public class AppCommonUtils {
 //			driver.manage().window().maximize();      //--Implemented in login()method
 //			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 
-		/*
-		 * Setting up Locators File
-		 */
-
-		locators.setUpLocatorsFile("locatorsfile");
 	}
 
 	public static WebElement getElement(String locator, String type) {
-
+		WebElement element = null;
 		type = type.toLowerCase();
-
-		if (type.equals("id")) {
-			return driver.findElement(By.id(locator));
-		} else if (type.equals("xpath")) {
-			return driver.findElement(By.xpath(locator));
-		} else if (type.equals("cssselector")) {
-			return driver.findElement(By.cssSelector(locator));
-		} else if (type.equals("name")) {
-			return driver.findElement(By.name(locator));
-		} else if (type.equals("classname")) {
-			return driver.findElement(By.className(locator));
-		} else if (type.equals("tagname")) {
-			return driver.findElement(By.tagName(locator));
-		} else if (type.equals("linktext")) {
-			return driver.findElement(By.linkText(locator));
-		} else {
-			System.out.println("Locator not supported or check type");
-			return null;
-
+		try {
+			if (type.equals("id")) {
+				element = driver.findElement(By.id(locator));
+				common.logInfo("Element found -" + element);
+			} else if (type.equals("xpath")) {
+				element = driver.findElement(By.xpath(locator));
+				common.logInfo("Element found -" + element);
+			} else if (type.equals("cssselector")) {
+				element = driver.findElement(By.cssSelector(locator));
+				common.logInfo("Element found -" + element);
+			} else if (type.equals("name")) {
+				element = driver.findElement(By.name(locator));
+				common.logInfo("Element found -" + element);
+			} else if (type.equals("classname")) {
+				element = driver.findElement(By.className(locator));
+				common.logInfo("Element found -" + element);
+			} else if (type.equals("tagname")) {
+				element = driver.findElement(By.tagName(locator));
+				common.logInfo("Element found -" + element);
+			} else if (type.equals("linktext")) {
+				element = driver.findElement(By.linkText(locator));
+				common.logInfo("Element found -" + element);
+			}
+		} catch (Exception e) {
+			common.logInfo("Locator not supported or check type");
+			common.logInfo(e.getMessage());
+			common.cleanUp();
 		}
+
+		return element;
 	}
 
 	public static WebElement getElementByXpath(String locator) {
+		WebElement element = null;
+		try {
+			common.logInfo("Lookup for Element-" + locator);
+			element = driver.findElement(By.xpath(locator));
+			common.logInfo("Element found -" + element);
 
-		return driver.findElement(By.xpath(locator));
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+			common.cleanUp();
+		}
+
+		return element;
+	}
+
+	public static boolean isElementPresent(String locator) {
+		try {
+			if (getElementByXpath(locator).isDisplayed()) {
+				common.logInfo("Element is Displayed-" + locator);
+				return true;
+			}
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+			common.cleanUp();
+		}
+
+		return false;
+	}
+
+	public static boolean isElementEnabled(String locator) {
+		try {
+			if (getElementByXpath(locator).isEnabled()) {
+				common.logInfo("Element is Enabled-" + locator);
+				return true;
+			}
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+			common.cleanUp();
+		}
+
+		return false;
 	}
 
 	public static List<WebElement> getElementsByTagname(WebElement element, String tagname) {
+		try {
+			return element.findElements(By.tagName(tagname));
+		} catch (Exception e) {
+			common.logInfo("Locator not found -check element and type");
+			common.logInfo(e.getMessage());
+			common.cleanUp();
+		}
 
-		return element.findElements(By.tagName(tagname));
+		return null;
 
 	}
 
 	public static List<WebElement> getElements(String locator, String type) {
 
 		type = type.toLowerCase();
-
-		if (type.equals("id")) {
-			return driver.findElements(By.id(locator));
-		} else if (type.equals("xpath")) {
-			return driver.findElements(By.xpath(locator));
-		} else if (type.equals("cssselector")) {
-			return driver.findElements(By.cssSelector(locator));
-		} else if (type.equals("name")) {
-			return driver.findElements(By.name(locator));
-		} else if (type.equals("classname")) {
-			return driver.findElements(By.className(locator));
-		} else if (type.equals("tagname")) {
-			return driver.findElements(By.tagName(locator));
-		} else if (type.equals("linktext")) {
-			return driver.findElements(By.linkText(locator));
-		} else {
-			System.out.println("Locator not supported or check type");
-			return null;
-
+		try {
+			if (type.equals("id")) {
+				return driver.findElements(By.id(locator));
+			} else if (type.equals("xpath")) {
+				return driver.findElements(By.xpath(locator));
+			} else if (type.equals("cssselector")) {
+				return driver.findElements(By.cssSelector(locator));
+			} else if (type.equals("name")) {
+				return driver.findElements(By.name(locator));
+			} else if (type.equals("classname")) {
+				return driver.findElements(By.className(locator));
+			} else if (type.equals("tagname")) {
+				return driver.findElements(By.tagName(locator));
+			} else if (type.equals("linktext")) {
+				return driver.findElements(By.linkText(locator));
+			}
+		} catch (Exception e) {
+			common.logInfo("Locator not supported or check type");
+			common.logInfo(e.getMessage());
+			common.cleanUp();
 		}
-
+		return null;
 	}
 
 	public static void findElementAndClick(List<WebElement> list, String requiredText) {
-
-		for (WebElement eachElement : list) {
-			if (eachElement.getText().contains(requiredText)) {
-				clickAndWait(eachElement);
-				break;
+		try {
+			for (WebElement eachElement : list) {
+				if (eachElement.getText().contains(requiredText)) {
+					clickAndWait(eachElement);
+					common.logInfo("clicked on " + requiredText);
+					break;
+				}
 			}
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+//			driver.quit();
+//			extentreport.endTest(test);
+//			extentreport.flush();
+			common.cleanUp();
 		}
 
 	}
 
 	public static void clickAndWait(WebElement element) {
-		element.click();
-		driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+		try {
+			element.click();
+			common.logInfo("click on element" + element);
+			driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+//			driver.quit();
+//			extentreport.endTest(test);
+//			extentreport.flush();
+			common.cleanUp();
+		}
+
 	}
 
 	public static void clickAndTypeAndWait(WebElement element, String keysToSend) {
-
-		clickAndWait(element);
-		element.sendKeys(keysToSend);
-		driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+		try {
+			clickAndWait(element);
+			element.sendKeys(keysToSend);
+			common.logInfo("Entered text -" + keysToSend);
+			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+			common.cleanUp();
+		}
 	}
 
 	public static void dragAndDrop(WebElement fromElement, WebElement toElement) {
-
-		Actions action = new Actions(driver);
-		// 1)
-		action.dragAndDrop(fromElement, toElement).build().perform();
+		try {
+			Actions action = new Actions(driver);
+			// 1)
+			action.dragAndDrop(fromElement, toElement).build().perform();
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+			common.cleanUp();
+		}
 
 		/*
 		 * 2)
@@ -448,16 +597,27 @@ public class AppCommonUtils {
 	}
 
 	public static void slider(WebElement sliderElement, int xOffset, int yOffset) {
+		try {
+			Actions action = new Actions(driver);
 
-		Actions action = new Actions(driver);
+			action.dragAndDropBy(sliderElement, xOffset, yOffset).perform();
 
-		action.dragAndDropBy(sliderElement, xOffset, yOffset).perform();
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+			common.cleanUp();
+		}
 	}
 
 	public static void selectFromDropdown(WebElement element, String textToBeSelected) {
+		try {
+			Select select = new Select(element);
+			select.selectByVisibleText(textToBeSelected);
+			common.logInfo(textToBeSelected + " selected");
 
-		Select select = new Select(element);
-		select.selectByVisibleText(textToBeSelected);
+		} catch (Exception e) {
+			common.logInfo(e.getMessage());
+			common.cleanUp();
+		}
 
 	}
 
