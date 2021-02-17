@@ -65,6 +65,7 @@ public class AppCommonUtils {
 	private static ExtentReports extentreport;
 	private static ExtentTest test;
 	public static String className;
+	
 
 	public static class ProjectProperties {
 
