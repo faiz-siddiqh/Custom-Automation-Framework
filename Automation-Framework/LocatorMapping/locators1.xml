@@ -1,0 +1,20 @@
+<elements>
+
+	<!-- Home Page -->
+
+	<element name="homepage-login" locator="//a[contains(@class,'sign-in btn')]"/>
+	
+	<element name="homepage-email" locator="//input[@id='inputEmail']"/>
+	<element name="homepage-password" locator="//input[@id='inputPassword']"/>
+	
+	
+	<!-- Buttons -->
+	
+	<element name="login-btn" locator="//input[@id='login']"/>
+	
+
+
+
+
+
+</elements>
