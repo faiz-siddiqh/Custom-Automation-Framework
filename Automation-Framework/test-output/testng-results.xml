@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testng-results ignored="0" total="1" passed="1" failed="0" skipped="0">
+<testng-results ignored="0" total="2" passed="2" failed="0" skipped="0">
   <reporter-output>
   </reporter-output>
-  <suite started-at="2021-02-27T17:12:51 IST" name="Default suite" finished-at="2021-02-27T17:13:09 IST" duration-ms="17914">
+  <suite started-at="2021-03-09T17:26:28 IST" name="Default suite" finished-at="2021-03-09T17:27:27 IST" duration-ms="58551">
     <groups>
     </groups>
-    <test started-at="2021-02-27T17:12:51 IST" name="Default test" finished-at="2021-02-27T17:13:09 IST" duration-ms="17914">
+    <test started-at="2021-03-09T17:26:28 IST" name="Default test" finished-at="2021-03-09T17:27:27 IST" duration-ms="58551">
       <class name="modulename.HomePage">
-        <test-method is-config="true" signature="setUp()[pri:0, instance:modulename.HomePage@6d2a209c]" started-at="2021-02-27T17:12:52 IST" name="setUp" finished-at="2021-02-27T17:12:52 IST" duration-ms="547" status="PASS">
+        <test-method is-config="true" signature="setUp()[pri:0, instance:modulename.HomePage@75329a49]" started-at="2021-03-09T17:26:28 IST" name="setUp" finished-at="2021-03-09T17:26:29 IST" duration-ms="893" status="PASS">
           <reporter-output>
           </reporter-output>
         </test-method> <!-- setUp -->
-        <test-method signature="loginwithInvalidcredentials_20001(java.lang.reflect.Method)[pri:0, instance:modulename.HomePage@6d2a209c]" started-at="2021-02-27T17:12:52 IST" name="loginwithInvalidcredentials_20001" finished-at="2021-02-27T17:13:08 IST" duration-ms="16220" status="PASS">
+        <test-method signature="loginwithInvalidcredentials_20001(java.lang.reflect.Method)[pri:0, instance:modulename.HomePage@75329a49]" started-at="2021-03-09T17:26:29 IST" name="loginwithInvalidcredentials_20001" finished-at="2021-03-09T17:26:51 IST" duration-ms="21504" status="PASS">
           <params>
             <param index="0">
               <value>
@@ -22,11 +22,33 @@
           <reporter-output>
           </reporter-output>
         </test-method> <!-- loginwithInvalidcredentials_20001 -->
-        <test-method is-config="true" signature="cleanUp(org.testng.ITestResult)[pri:0, instance:modulename.HomePage@6d2a209c]" started-at="2021-02-27T17:13:08 IST" name="cleanUp" finished-at="2021-02-27T17:13:09 IST" duration-ms="1122" status="PASS">
+        <test-method is-config="true" signature="cleanUp(org.testng.ITestResult)[pri:0, instance:modulename.HomePage@75329a49]" started-at="2021-03-09T17:26:51 IST" name="cleanUp" finished-at="2021-03-09T17:26:52 IST" duration-ms="1247" status="PASS">
           <params>
             <param index="0">
               <value>
-                <![CDATA[[TestResult name=loginwithInvalidcredentials_20001 status=SUCCESS method=HomePage.loginwithInvalidcredentials_20001(java.lang.reflect.Method)[pri:0, instance:modulename.HomePage@6d2a209c] output={null}]]]>
+                <![CDATA[[TestResult name=loginwithInvalidcredentials_20001 status=SUCCESS method=HomePage.loginwithInvalidcredentials_20001(java.lang.reflect.Method)[pri:0, instance:modulename.HomePage@75329a49] output={null}]]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- cleanUp -->
+        <test-method signature="navigateToHomePage_FrontEnd_20002(java.lang.reflect.Method)[pri:0, instance:modulename.HomePage@75329a49]" started-at="2021-03-09T17:26:52 IST" name="navigateToHomePage_FrontEnd_20002" finished-at="2021-03-09T17:27:25 IST" duration-ms="33467" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[public void modulename.HomePage.navigateToHomePage_FrontEnd_20002(java.lang.reflect.Method)]]>
+              </value>
+            </param>
+          </params>
+          <reporter-output>
+          </reporter-output>
+        </test-method> <!-- navigateToHomePage_FrontEnd_20002 -->
+        <test-method is-config="true" signature="cleanUp(org.testng.ITestResult)[pri:0, instance:modulename.HomePage@75329a49]" started-at="2021-03-09T17:27:25 IST" name="cleanUp" finished-at="2021-03-09T17:27:27 IST" duration-ms="1399" status="PASS">
+          <params>
+            <param index="0">
+              <value>
+                <![CDATA[[TestResult name=navigateToHomePage_FrontEnd_20002 status=SUCCESS method=HomePage.navigateToHomePage_FrontEnd_20002(java.lang.reflect.Method)[pri:0, instance:modulename.HomePage@75329a49] output={null}]]]>
               </value>
             </param>
           </params>

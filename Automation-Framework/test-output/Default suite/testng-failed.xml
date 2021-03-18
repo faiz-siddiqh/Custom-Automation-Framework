@@ -5,9 +5,8 @@
     <classes>
       <class name="modulename.HomePage">
         <methods>
+          <include name="navigateToHomePage_FrontEnd_20002" invocation-numbers="0"/>
           <include name="cleanUp"/>
-          <include name="loginwithInvalidcredentials_20001" invocation-numbers="0"/>
-          <include name="launch"/>
           <include name="setUp"/>
         </methods>
       </class> <!-- modulename.HomePage -->

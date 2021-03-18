@@ -42,6 +42,20 @@ public class HomePage {
 				"Click on Login button");
 	}
 
+	@Test
+	public void navigateToHomePage_FrontEnd_20002(Method method) {
+		homepage.launchAndLogin(method.getName());
+
+		BaseUtils.clickAndWait(BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("homepage-Demo")),
+				"Click on Demo button");
+		BaseUtils.clickAndWait(BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("Demo-Homepage-FrontEnd")),
+				"Click on HomePage-FrontEnd link-button");
+		BaseUtils.switchToHandle();
+		assertTrue(BaseUtils.isElementPresent(BaseUtils.locators.getLocator("Demo-FrontEnd-Hotels"),
+				"Validating Travel Page is opened"), "Travels Page is not opened-Element not present");
+
+	}
+
 	@AfterMethod
 	public void cleanUp(ITestResult testresult) throws Exception {
 		if (testresult.getStatus() == ITestResult.FAILURE)

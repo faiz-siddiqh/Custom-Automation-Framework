@@ -7,6 +7,10 @@
 	<element name="homepage-email" locator="//input[@id='inputEmail']"/>
 	<element name="homepage-password" locator="//input[@id='inputPassword']"/>
 	
+	<element name="homepage-Demo" locator="//a[@class='lvl-0 link nav-link'][contains(text(),'Demo')]"/>
+	<element name="Demo-Homepage-FrontEnd" locator="//a[contains(text(),'Homepage - Front-End')]"/>
+	<element name="Demo-FrontEnd-Hotels" locator="//a[@class='text-center hotels active']"/>
+	
 	
 	<!-- Buttons -->
 	
