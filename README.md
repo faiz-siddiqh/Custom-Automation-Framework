@@ -11,5 +11,5 @@ Please refer to the dependencies in POM.xml to understand the API's used.
 
 Faiz Ahmed Siddiqh K- Author and owner of this Framework .
 
-Please give your feedback at  Kfasid@protonmail.com /Kfasid@tutanota.com.
+Please give your feedback at  Kfasid@protonmail.com / Kfasid@tutanota.com
 
