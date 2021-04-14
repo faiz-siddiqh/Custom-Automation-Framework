@@ -17,8 +17,7 @@ public class HomePage_Util {
 
 	public void setUp() throws SAXException, IOException {
 		BaseUtils.common.setClassName("HomePage-Test");
-		BaseUtils.testData.setTestFile("Homepage");
-		BaseUtils.setUp();
+		BaseUtils.setUp("HomePage");
 	}
 
 	public void launchAndLogin(String testName) {
