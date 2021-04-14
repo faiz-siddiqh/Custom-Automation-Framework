@@ -1,5 +1,6 @@
 # Custom-Automation-Framework
 A custom Automation Framework [still in development] which can be used for Testing web applications.
+Mainly created and used to update the baseUtils class which has all the required methods to perform common operations of WebUI Automation and some of the RESTAPI testing.
 
 
 ## Technologies and Tools
