@@ -37,6 +37,7 @@ import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
@@ -744,6 +745,7 @@ public class BaseUtils {
 		String driverLocation;
 		common.logInfo("Setting Up WebDriver");
 		String driverName = ProjectProperties.readFromGlobalConfigFile("driver");
+
 		// String baseURL = projectDetails.getProperty("baseURL");
 		common.logInfo("WebDriver chosen =" + driverName);
 
@@ -760,9 +762,10 @@ public class BaseUtils {
 			}
 			// Set Options using for chrome using the below commented line
 
-			ChromeOptions options = new ChromeOptions();
-			// options.addArguments("--headless");
+			getChromeOptions();
+			ChromeOptions options = getChromeOptions();
 			driver = new ChromeDriver(options);
+
 			common.logInfo("Launching Chrome");
 
 		} else if (driverName.equalsIgnoreCase("FireFox")) {
@@ -785,7 +788,7 @@ public class BaseUtils {
 																				// your machine and login your cognizant
 																				// credentials
 			FirefoxOptions options = new FirefoxOptions();
-			options.setProfile(Automationprofile);
+			// options.setProfile(Automationprofile);
 			driver = new FirefoxDriver(options);
 			common.logInfo("Launching Firefox");
 		}
@@ -794,6 +797,28 @@ public class BaseUtils {
 		driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
 		common.logInfo("Maximizing the window");
 
+	}
+
+	/**
+	 * To return ChromeOptions with desired Capabilities as mentioned in
+	 * config.properties file
+	 * 
+	 * @return
+	 */
+	public static ChromeOptions getChromeOptions() {
+		String pageLoadStrategy = ProjectProperties.readFromGlobalConfigFile("PageLoadStrategy");
+		String browserState = ProjectProperties.readFromGlobalConfigFile("BrowserState");
+		ChromeOptions options = new ChromeOptions();
+		if (browserState.equalsIgnoreCase("headless"))
+			options.addArguments("--headless");
+		if (pageLoadStrategy.equalsIgnoreCase("Eager"))
+			options.setPageLoadStrategy(PageLoadStrategy.EAGER);
+		else if (pageLoadStrategy.equalsIgnoreCase("Normal"))
+			options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+		else
+			options.setPageLoadStrategy(PageLoadStrategy.NONE);
+
+		return options;
 	}
 
 	/**
@@ -1266,7 +1291,7 @@ public class BaseUtils {
 	}
 
 	/**
-	 * Click And Clear And Type And Wait an input are textarea field
+	 * Click And Clear And Type And Wait an input are text area field
 	 * 
 	 * @param element
 	 * @param keysToSend
@@ -1309,7 +1334,7 @@ public class BaseUtils {
 	}
 
 	/**
-	 * Slide a webelement to a specific offset
+	 * Slide a WebElement to a specific offset
 	 * 
 	 * @param sliderElement
 	 * @param xOffset
