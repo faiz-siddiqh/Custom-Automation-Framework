@@ -30,12 +30,13 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.Alert;
+//import org.openqa.selenium.WindowType;  ---Selenium 4.0
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.Point;
@@ -188,6 +189,46 @@ public class BaseUtils {
 			} catch (Exception e) {
 				logInfo(e.getMessage());
 				cleanUp();
+			}
+
+		}
+
+		/**
+		 * Navigate to a URL on new Tab of a browser -Selenium 4 -feature
+		 * 
+		 * @param URL
+		 */
+		public static void navigateToUrlOnANewTab(String URL) {
+
+			try {
+//				driver.switchTo().newWindow(WindowType.TAB);
+				driver.get(URL);
+				logInfo("Navigating to URL on new Tab");
+
+			} catch (Exception e) {
+				logInfo("Error Navigating to URL on a new Window");
+				common.cleanUp();
+
+			}
+
+		}
+
+		/**
+		 * Navigate to a URL on new Window of a browser -Selenium 4 -feature
+		 * 
+		 * @param URL
+		 */
+		public static void navigateToUrlOnANewWindow(String URL) {
+
+			try {
+//				driver.switchTo().newWindow(WindowType.WINDOW);
+				driver.get(URL);
+				logInfo("Navigating to URL on new Window");
+
+			} catch (Exception e) {
+				logInfo("Error Navigating to URL on a new Window");
+				common.cleanUp();
+
 			}
 
 		}
@@ -952,6 +993,26 @@ public class BaseUtils {
 		}
 		common.logInfo("Lookup for Element successful");
 		return elementToBeFound;
+	}
+
+	/**
+	 * Open A Link On new Tab
+	 * 
+	 * @param element -WebElement of the link that has to be opened in a new Tab of
+	 *                the browser
+	 */
+	public static void openLinkInNewTab(WebElement element) {
+		try {
+
+			String tab = Keys.chord(Keys.CONTROL, Keys.RETURN);
+			element.sendKeys(tab);
+			common.logInfo("Opening link on a new Tab");
+
+		} catch (Exception e) {
+			common.logInfo("Error while opening link in new Tab");
+			common.cleanUp();
+		}
+
 	}
 
 	/**
