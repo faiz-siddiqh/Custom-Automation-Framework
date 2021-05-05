@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -53,6 +55,10 @@ import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.IAnnotationTransformer;
+import org.testng.IRetryAnalyzer;
+import org.testng.ITestResult;
+import org.testng.annotations.ITestAnnotation;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -522,6 +528,12 @@ public class BaseUtils {
 //			}
 	}
 
+	/**
+	 * Class to handle TestData
+	 * 
+	 * @author Faiz-Siddiqh
+	 *
+	 */
 	public static class testData {
 		public static XSSFWorkbook ExcelWBook;
 		private static XSSFSheet ExcelWSheet;
@@ -672,6 +684,39 @@ public class BaseUtils {
 			alert.sendKeys(keysToSend);
 		}
 
+	}
+
+	/**
+	 * Class to handle adding of Custom Annotation From TestNG !!!Listner should be
+	 * added to the .xml script file in TestScripts
+	 */
+	public static class Transformation implements IAnnotationTransformer {
+
+		@Override
+		public void transform(ITestAnnotation annotation, Class testClass, Constructor testConstructor,
+				Method testMethod) {
+			Class<? extends IRetryAnalyzer> retry = annotation.getRetryAnalyzerClass();
+			if (retry == null) {
+				annotation.setRetryAnalyzer(BaseUtils.RetryAfterFailure.class);
+			}
+
+		}
+	}
+
+	/**
+	 * Class to handle Retry of Failed Test Cases
+	 */
+	public class RetryAfterFailure implements IRetryAnalyzer {
+		private int counter = 0, retryCount = 1;
+
+		@Override
+		public boolean retry(ITestResult result) {
+			if (counter < retryCount) {
+				counter++;
+				return true;
+			}
+			return false;
+		}
 	}
 
 	/**
