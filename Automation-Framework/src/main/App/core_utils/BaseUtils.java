@@ -84,6 +84,22 @@ public class BaseUtils {
 	public static String moduleName;
 	public static String methodName;
 
+	public static class GlobalLibrary {
+
+		// Trigger Docker through Windows Batch File
+		public void initiateDocker() {
+
+			Runtime runtimeCmd = Runtime.getRuntime();
+			try {
+				runtimeCmd.exec("cmd /c start ExecutionFiles\\dockerUp.bat");
+			} catch (IOException e) {
+				System.out.println("Enable to initiate Docker");
+				e.printStackTrace();
+			}
+		}
+
+	}
+
 	/**
 	 * Class with methods related to fetching and Setting up of Properties of the
 	 * project
