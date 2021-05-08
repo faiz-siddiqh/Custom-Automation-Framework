@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -51,6 +53,8 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
@@ -77,7 +81,7 @@ public class BaseUtils {
 	 */
 
 	private static Properties properties = new Properties();
-	private static WebDriver driver;
+	private static RemoteWebDriver driver;
 	private static ExtentReports extentreport;
 	private static ExtentTest test;
 	public static String className;
@@ -96,6 +100,28 @@ public class BaseUtils {
 				System.out.println("Enable to initiate Docker");
 				e.printStackTrace();
 			}
+		}
+
+		public static void setUpDriver() {
+			String driverName = ProjectProperties.readFromGlobalConfigFile("driver");
+			String dockerHubURL = ProjectProperties.readFromGlobalConfigFile("DockerGridURL");
+
+			DesiredCapabilities cap = null;
+			URL url = null;
+			try {
+				url = new URL(dockerHubURL);
+			} catch (MalformedURLException e) {
+				System.out.println("Error Connecting to Grid");
+				e.printStackTrace();
+			}
+			if (driverName.contains("Chrome")) {
+				cap = DesiredCapabilities.chrome();
+			}
+			if (driverName.contains("Firefox")) {
+				cap = DesiredCapabilities.firefox();
+			}
+
+			driver = new RemoteWebDriver(url, cap);
 		}
 
 	}
@@ -885,7 +911,7 @@ public class BaseUtils {
 			// Set Options using for Firefox
 
 			org.openqa.selenium.firefox.ProfilesIni profile = new org.openqa.selenium.firefox.ProfilesIni();
-			FirefoxProfile Automationprofile = profile.getProfile("Automation");// Create a profile with Automation in
+			//FirefoxProfile Automationprofile = profile.getProfile("Automation");// Create a profile with Automation in
 																				// Firefox on
 																				// your machine and login your cognizant
 																				// credentials
