@@ -1,12 +1,14 @@
 # Custom-Automation-Framework
-A custom Automation Framework [still in development] which can be used for Testing web applications.
+A custom Automation Framework which can be used for Testing web applications,REST API with many utility methods.
 Mainly created and used to update the baseUtils class which has all the required methods to perform common operations of WebUI Automation and some of the RESTAPI testing.
-
+Implementation for Triggering running of tests on Docker container is also implemented in GlobalLibrary Class in BaseUtils class.
+  The above implementation is automated and there is NO need of downloading images.However Docker must be installed in the machine/hub.
 
 ## Technologies and Tools
 This Framework follows Data Driven Testing ,Reading the Locators from xml file.It also uses Selenium WebDriver,TestNG,Apache POI and many other tools.
 The test artitecture will be uploaded soon so as to understand the framework better.
-Please refer to the dependencies in POM.xml to understand the API's used.
+
+Re-Run of failed testcases is also implemented.Just add the listener in the testscript.xml file and add Transformation class .
 
 
 ## Contributors
