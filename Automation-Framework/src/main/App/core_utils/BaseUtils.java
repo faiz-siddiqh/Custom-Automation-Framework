@@ -104,7 +104,6 @@ public class BaseUtils {
 			String commandToBeExecuted;
 			String messageToBeSearchedInLogs;
 			String logFilePath = ProjectProperties.readFromGlobalConfigFile("DockerLogFile");
-			System.out.println(command);
 			Runtime runtimeCmd = Runtime.getRuntime();
 			if (command.contains("StartUp")) {
 				deleteAFile(logFilePath);
@@ -124,9 +123,8 @@ public class BaseUtils {
 				Thread.sleep(3000);
 				while (System.currentTimeMillis() < searchTime) {
 
-					if (flag) {
+					if (flag)
 						break;
-					}
 
 					BufferedReader readLogs = new BufferedReader(new FileReader("ExecutionFiles//logs.txt"));
 					String currentLine = readLogs.readLine();
@@ -159,10 +157,8 @@ public class BaseUtils {
 		public static boolean deleteAFile(String path) {
 
 			File fileToBeDeleted = new File(path);
-			if (fileToBeDeleted.exists()) {
-				System.out.println("Deleting File");
+			if (fileToBeDeleted.exists())
 				return fileToBeDeleted.delete();
-			}
 
 			return false;
 		}
@@ -334,9 +330,8 @@ public class BaseUtils {
 		public static void launch(String url) {
 			try {
 				// Initiate driver if not present
-				if (driver == null) {
+				if (driver == null)
 					BaseUtils.setUpDriver();
-				}
 
 				driver.get(url);
 				logInfo("Navigating to -" + url);
