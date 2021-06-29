@@ -45,6 +45,7 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.PageLoadStrategy;
+import org.openqa.selenium.Platform;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
@@ -99,13 +100,17 @@ public class BaseUtils {
 	 */
 	public static class GlobalLibrary {
 
-		// Trigger Docker through Windows Batch File
+		/**
+		 * Trigger Docker through Windows Batch File
+		 * 
+		 * @param command --if startUp then startDocker else shutDown
+		 */
 		public static void triggerDocker(String command) {
 			String commandToBeExecuted;
 			String messageToBeSearchedInLogs;
 			String logFilePath = ProjectProperties.readFromGlobalConfigFile("DockerLogFile");
 			Runtime runtimeCmd = Runtime.getRuntime();
-			if (command.contains("StartUp")) {
+			if (command.toLowerCase().contains("startup")) {
 				deleteAFile(logFilePath);
 				commandToBeExecuted = "cmd /c start cmd.exe /K \"cd ExecutionFiles && start dockerUp.bat\"";
 				messageToBeSearchedInLogs = "The node is registered to the hub and ready to use";
@@ -187,11 +192,13 @@ public class BaseUtils {
 		/**
 		 * Set up the Remote Grid Driver
 		 */
-		public static void setUpDriver() {
+		public static void setUpGridDriver() {
 			String driverName = ProjectProperties.readFromGlobalConfigFile("driver");
 			String dockerHubURL = ProjectProperties.readFromGlobalConfigFile("DockerGridURL");
+			String driverLocation;
 
 			DesiredCapabilities cap = null;
+			cap.setJavascriptEnabled(true);
 			URL url = null;
 			try {
 				url = new URL(dockerHubURL);
@@ -200,15 +207,52 @@ public class BaseUtils {
 				e.printStackTrace();
 			}
 			if (driverName.contains("Chrome")) {
+				driverLocation = ProjectProperties.readFromGlobalConfigFile("chromedriver");
 				cap = DesiredCapabilities.chrome();
-			}
-			if (driverName.contains("Firefox")) {
-				cap = DesiredCapabilities.firefox();
-			}
+				cap.setCapability("chrome.binary", driverLocation);
 
+			} else if (driverName.contains("Firefox")) {
+				driverLocation = ProjectProperties.readFromGlobalConfigFile("firefoxdriver");
+				cap = DesiredCapabilities.firefox();
+				cap.setCapability("firefox.binary", driverLocation);
+
+			}
 			driver = new RemoteWebDriver(url, cap);
 		}
 
+		/**
+		 * Method to delete a Folder within the workspace
+		 * 
+		 * @param folderName
+		 */
+		public static void deleteAFolder(String folderName) {
+
+			File file = new File(folderName);
+
+			if (file.isDirectory()) {
+
+				// Check if Folder is Empty
+				if (file.list().length == 0)
+					file.delete();
+				else {
+					String[] filesInsideFolder = file.list();
+					// Delete each file inside the folder and also inside if exists
+					for (String eachFile : filesInsideFolder)
+//						File fileToBeDeleted = new File(file, eachFile);
+						deleteAFile(eachFile);
+
+					if (file.list().length == 0) {
+						file.delete();
+						common.logInfo("File deleted " + file);
+					}
+
+				}
+			} else {
+				// if the folder is a file then delete
+				file.delete();
+				common.logInfo("File deleted " + file);
+			}
+		}
 	}
 
 	/**
@@ -278,7 +322,8 @@ public class BaseUtils {
 		 */
 		public static String readProjectVariables(String propertyName) {
 			properties = new Properties();
-			loadPropertiesFile("\\ExecutionFiles\\" + moduleName + "\\module.properties"); // Here the module name has
+			loadPropertiesFile("\\ExecutionFiles\\" + moduleName + "\\module.properties"); // Here the module name
+																							// has
 																							// to be
 			// specified manually.Yet to update
 			// this method.
@@ -443,8 +488,10 @@ public class BaseUtils {
 				resultsFile.delete();
 			}
 			resultsFile.mkdir();
-			extentreport = new ExtentReports(path + "//" + "ExtentReport.html", false);// to create a new extent report
-																						// for every module ,change to
+			extentreport = new ExtentReports(path + "//" + "ExtentReport.html", false);// to create a new extent
+																						// report
+																						// for every module ,change
+																						// to
 																						// true.
 			extentreport.addSystemInfo("Selenium Version", "3.141.59").addSystemInfo("Platform", "Windows");
 			// extent.addSystemInfo("Selenium Version",
@@ -864,8 +911,18 @@ public class BaseUtils {
 
 			String path = System.getProperty("user.dir") + "//Screenshots";
 			String fullPath = path + "//" + new SimpleDateFormat("yyyy-MM-dd hh-mm-ss'.tsv'").format(new Date())
-					+ ".png"; // U CAN CHANGE THE NAME OF THE SCREENSHOT FILE .
-			File sourceFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE); // CAPTURE SCREENSHOT AS A
+					+ ".png"; // U
+								// CAN
+								// CHANGE
+								// THE
+								// NAME
+								// OF
+								// THE
+								// SCREENSHOT
+								// FILE
+								// .
+			File sourceFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE); // CAPTURE SCREENSHOT AS
+																							// A
 																							// FILE
 			try {
 				FileUtils.copyFile(sourceFile, new File(fullPath)); // copy the screenshot to the specified path
@@ -886,8 +943,18 @@ public class BaseUtils {
 
 			String path = System.getProperty("user.dir") + "//Screenshots";
 			String fullPath = path + "//" + new SimpleDateFormat("yyyy-MM-dd hh-mm-ss'.tsv'").format(new Date())
-					+ ".png"; // U CAN CHANGE THE NAME OF THE SCREENSHOT FILE .
-			File sourceFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE); // CAPTURE SCREENSHOT AS A
+					+ ".png"; // U
+								// CAN
+								// CHANGE
+								// THE
+								// NAME
+								// OF
+								// THE
+								// SCREENSHOT
+								// FILE
+								// .
+			File sourceFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE); // CAPTURE SCREENSHOT AS
+																							// A
 			Point point = element.getLocation();
 			int xcordinate = point.getX();
 			int ycordinate = point.getY();
@@ -928,6 +995,7 @@ public class BaseUtils {
 
 			return sb.toString();
 		}
+
 	}
 
 	/**
@@ -944,8 +1012,15 @@ public class BaseUtils {
 		/*
 		 * Setting up Locators File
 		 */
+
 		locators.setUpLocatorsFile();
 		testData.setTestFile(moduleName);
+
+		String isSelenoid = ProjectProperties.readFromGlobalConfigFile("RunOnGrid");
+		if (isSelenoid.toLowerCase().contains("yes")) {
+			GlobalLibrary.triggerDocker("StartUp");
+			GlobalLibrary.scaleUpBrowserInstances();
+		}
 
 	}
 
@@ -954,6 +1029,23 @@ public class BaseUtils {
 	 * FOR CHROME AND FIREFOX BROWSERS ONLY AND FOR BOTH MAC OS AND WINDOWS
 	 */
 	public static void setUpDriver() {
+		String isSelenoid = ProjectProperties.readFromGlobalConfigFile("RunOnGrid");
+		if (isSelenoid.toLowerCase().contains("yes")) {
+			GlobalLibrary.setUpGridDriver();
+		} else {
+			BaseUtils.setUpLocalDriver();
+		}
+
+		driver.manage().window().maximize();
+		driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+		common.logInfo("Maximizing the window");
+
+	}
+
+	/**
+	 * Setting up WebDriver on Local Machine .
+	 */
+	public static void setUpLocalDriver() {
 		// Load the properties file using this method which contains baseURL and
 		// WebDriverType
 		String driverLocation;
@@ -987,12 +1079,11 @@ public class BaseUtils {
 			// firefoxdriver.
 			driverLocation = ProjectProperties.readFromGlobalConfigFile("firefoxdriver");
 
-			if (System.getProperty("os.name").startsWith("Windows")) {// the path varies for windows and Mac
+			if (System.getProperty("os.name").startsWith("Windows")) // the path varies for windows and Mac
 				System.setProperty("webdriver.firefox.driver", System.getProperty("user.dir") + driverLocation);
-			} else {
+			else
 				System.setProperty("webdriver.firefox.driver",
 						System.getProperty("user.dir") + driverLocation.replaceAll(".exe", ""));
-			}
 
 			// Set Options using for Firefox
 
@@ -1000,17 +1091,12 @@ public class BaseUtils {
 			// FirefoxProfile Automationprofile = profile.getProfile("Automation");// Create
 			// a profile with Automation in
 			// Firefox on
-			// your machine and login your cognizant
-			// credentials
+			// your machine
 			FirefoxOptions options = new FirefoxOptions();
 			// options.setProfile(Automationprofile);
 			driver = new FirefoxDriver(options);
 			common.logInfo("Launching Firefox");
 		}
-
-		driver.manage().window().maximize();
-		driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
-		common.logInfo("Maximizing the window");
 
 	}
 
@@ -1046,7 +1132,8 @@ public class BaseUtils {
 			wait.until(new ExpectedCondition<Boolean>() {
 				public Boolean apply(WebDriver driver) {
 					common.logInfo("Waiting for page to Load Completely.");
-					return ((JavascriptExecutor) driver).executeScript("return document.readyState").equals("complete");
+					return ((JavascriptExecutor) driver).executeScript("return document.readyState").toString()
+							.equals("complete");
 				}
 			});
 			// driver.manage().timeouts().pageLoadTimeout(25, TimeUnit.SECONDS);
@@ -1526,6 +1613,16 @@ public class BaseUtils {
 	}
 
 	/**
+	 * Method to refresh a page using keys--should be used only when refresh() is
+	 * not working
+	 */
+	public static void refreshPageUsingKeys() {
+		Actions actions = new Actions(driver);
+		actions.keyDown(Keys.CONTROL).sendKeys(Keys.F5).keyUp(Keys.CONTROL).perform();
+
+	}
+
+	/**
 	 * Click And Clear And Type And Wait an input are text area field
 	 * 
 	 * @param element
@@ -1603,6 +1700,30 @@ public class BaseUtils {
 			common.logInfo("Unable to Scroll Down");
 			common.cleanUp();
 		}
+	}
+
+	/**
+	 * Scroll to the bottom of the WebPage
+	 * 
+	 * @param element
+	 */
+	public static void scrollToBottom(WebElement element) {
+
+		common.logInfo("Scrolling to Bottom of the Page");
+		element.sendKeys(Keys.END);
+
+	}
+
+	/**
+	 * Scroll to the Top of the WebPage
+	 * 
+	 * @param element
+	 */
+	public static void scrollToTop(WebElement element) {
+
+		common.logInfo("Scrolling to top of the Page");
+		element.sendKeys(Keys.HOME);
+
 	}
 
 	/**
@@ -1745,6 +1866,17 @@ public class BaseUtils {
 		JsonPath jp = new JsonPath(response);// for parsing json
 		String value = jp.get(valueToBeExtracted);
 		return value;
+	}
+
+	/**
+	 * Check if the check box is selected
+	 * 
+	 * @param element
+	 * @return
+	 */
+	public static boolean isCheckBoxSelected(WebElement element) {
+
+		return element.isSelected();
 	}
 
 	/**
