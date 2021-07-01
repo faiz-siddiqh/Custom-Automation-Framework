@@ -56,6 +56,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
@@ -199,6 +200,9 @@ public class BaseUtils {
 
 			DesiredCapabilities cap = null;
 			cap.setJavascriptEnabled(true);
+
+			/* To handle https certification */
+			cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
 			URL url = null;
 			try {
 				url = new URL(dockerHubURL);
