@@ -9,13 +9,14 @@ This Framework follows Data Driven Testing ,Reading the Locators from xml file.I
 The test artitecture will be uploaded soon so as to understand the framework better.
 
 Re-Run of failed testcases is also implemented.Just add the listener in the testscript.xml file and add Transformation class .
+Working on Merging UI ,Rest API,Mobile Testing generic methods into one framework .
 
 
 ## Contributors
 
 Faiz Ahmed Siddiqh K- Author and owner of this Framework .
 
-Please give your feedback at  Kfasid@protonmail.com / Kfasid@tutanota.com
+Kfasid@protonmail.com / Kfasid@tutanota.com
 
 
 LinkedIn- http://www.linkedin.com/in/faiz-ahmed-siddiqh-k-15a050184
