@@ -45,7 +45,6 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.PageLoadStrategy;
-import org.openqa.selenium.Platform;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
@@ -54,7 +53,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -247,14 +245,14 @@ public class BaseUtils {
 
 					if (file.list().length == 0) {
 						file.delete();
-						common.logInfo("File deleted " + file);
+						Common.logInfo("File deleted " + file);
 					}
 
 				}
 			} else {
 				// if the folder is a file then delete
 				file.delete();
-				common.logInfo("File deleted " + file);
+				Common.logInfo("File deleted " + file);
 			}
 		}
 	}
@@ -349,12 +347,136 @@ public class BaseUtils {
 	}
 
 	/**
-	 * Class with all common methods
+	 * Class with all Common methods
 	 * 
 	 * @author Faiz-Siddiqh
 	 *
 	 */
-	public static class common {
+	public static class Common {
+
+		/**
+		 * Initial SETUP of the module -before class/suite .
+		 * 
+		 * @throws SAXException
+		 * @throws IOException
+		 */
+		public static void setUp(String moduleName) {
+
+			Common.setModuleName(moduleName);
+			// setting up an extent report
+			Common.getExtentReportInstance(); // setting up an extent report
+			/*
+			 * Setting up Locators File
+			 */
+
+			Locators.setUpLocatorsFile();
+			TestData.setTestFile(moduleName);
+
+			String isSelenoid = ProjectProperties.readFromGlobalConfigFile("RunOnGrid");
+			if (isSelenoid.toLowerCase().contains("yes")) {
+				GlobalLibrary.triggerDocker("StartUp");
+				GlobalLibrary.scaleUpBrowserInstances();
+			}
+
+		}
+
+		/**
+		 * SetUp the WEBDRIVER of the type specified in the config file . IMPLEMNETED
+		 * FOR CHROME AND FIREFOX BROWSERS ONLY AND FOR BOTH MAC OS AND WINDOWS
+		 */
+		public static void setUpDriver() {
+			String isSelenoid = ProjectProperties.readFromGlobalConfigFile("RunOnGrid");
+			if (isSelenoid.toLowerCase().contains("yes")) {
+				GlobalLibrary.setUpGridDriver();
+			} else {
+				BaseUtils.Common.setUpLocalDriver();
+			}
+
+			driver.manage().window().maximize();
+			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+			Common.logInfo("Maximizing the window");
+
+		}
+
+		/**
+		 * Setting up WebDriver on Local Machine .
+		 */
+		public static void setUpLocalDriver() {
+			// Load the properties file using this method which contains baseURL and
+			// WebDriverType
+			String driverLocation;
+			Common.logInfo("Setting Up WebDriver");
+			String driverName = ProjectProperties.readFromGlobalConfigFile("driver");
+
+			// String baseURL = projectDetails.getProperty("baseURL");
+			Common.logInfo("WebDriver chosen =" + driverName);
+
+			if (driverName.equalsIgnoreCase("Chrome")) {
+				// Set System Property to instantiate ChromeDriver with the path of
+				// chromedriver.
+
+				driverLocation = ProjectProperties.readFromGlobalConfigFile("chromedriver");
+				if (System.getProperty("os.name").startsWith("Windows")) {// the path varies for windows and Mac
+					System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir") + driverLocation);
+				} else {
+					System.setProperty("webdriver.chrome.driver",
+							System.getProperty("user.dir") + driverLocation.replaceAll(".exe", ""));
+				}
+				// Set Options using for chrome using the below commented line
+
+				getChromeOptions();
+				ChromeOptions options = getChromeOptions();
+				driver = new ChromeDriver(options);
+
+				Common.logInfo("Launching Chrome");
+
+			} else if (driverName.equalsIgnoreCase("FireFox")) {
+				// Set System Property to instantiate ChromeDriver with the path of
+				// firefoxdriver.
+				driverLocation = ProjectProperties.readFromGlobalConfigFile("firefoxdriver");
+
+				if (System.getProperty("os.name").startsWith("Windows")) // the path varies for windows and Mac
+					System.setProperty("webdriver.firefox.driver", System.getProperty("user.dir") + driverLocation);
+				else
+					System.setProperty("webdriver.firefox.driver",
+							System.getProperty("user.dir") + driverLocation.replaceAll(".exe", ""));
+
+				// Set Options using for Firefox
+
+				org.openqa.selenium.firefox.ProfilesIni profile = new org.openqa.selenium.firefox.ProfilesIni();
+				// FirefoxProfile Automationprofile = profile.getProfile("Automation");// Create
+				// a profile with Automation in
+				// Firefox on
+				// your machine
+				FirefoxOptions options = new FirefoxOptions();
+				// options.setProfile(Automationprofile);
+				driver = new FirefoxDriver(options);
+				Common.logInfo("Launching Firefox");
+			}
+
+		}
+
+		/**
+		 * To return ChromeOptions with desired Capabilities as mentioned in
+		 * config.properties file
+		 * 
+		 * @return
+		 */
+		public static ChromeOptions getChromeOptions() {
+			String pageLoadStrategy = ProjectProperties.readFromGlobalConfigFile("PageLoadStrategy");
+			String browserState = ProjectProperties.readFromGlobalConfigFile("BrowserState");
+			ChromeOptions options = new ChromeOptions();
+			if (browserState.equalsIgnoreCase("headless"))
+				options.addArguments("--headless");
+			if (pageLoadStrategy.equalsIgnoreCase("Eager"))
+				options.setPageLoadStrategy(PageLoadStrategy.EAGER);
+			else if (pageLoadStrategy.equalsIgnoreCase("Normal"))
+				options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
+			else
+				options.setPageLoadStrategy(PageLoadStrategy.NONE);
+
+			return options;
+		}
 
 		/**
 		 * To Login to the baseURL of the App
@@ -377,20 +499,15 @@ public class BaseUtils {
 		 * @param url
 		 */
 		public static void launch(String url) {
-			try {
-				// Initiate driver if not present
-				if (driver == null)
-					BaseUtils.setUpDriver();
+			// Initiate driver if not present
+			if (driver == null)
+				BaseUtils.Common.setUpDriver();
 
-				driver.get(url);
-				logInfo("Navigating to -" + url);
-				driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
-				waitForThePageToLoad();
+			driver.get(url);
+			logInfo("Navigating to -" + url);
+			driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+			waitForThePageToLoad();
 
-			} catch (Exception e) {
-				logInfo(e.getMessage());
-				cleanUp();
-			}
 		}
 
 		/**
@@ -399,14 +516,30 @@ public class BaseUtils {
 		 * @param url
 		 */
 		public static void navigateToUrl(String url) {
-			try {
-				driver.get(url);
-				common.logInfo("Navigating to -" + url);
-			} catch (Exception e) {
-				logInfo(e.getMessage());
-				cleanUp();
-			}
+			driver.get(url);
+			Common.logInfo("Navigating to -" + url);
 
+		}
+
+		/**
+		 * Wait for the page to load completely
+		 */
+		public static void waitForThePageToLoad() {
+			try {
+				WebDriverWait wait = new WebDriverWait(driver, 30);
+
+				wait.until(new ExpectedCondition<Boolean>() {
+					public Boolean apply(WebDriver driver) {
+						Common.logInfo("Waiting for page to Load Completely.");
+						return ((JavascriptExecutor) driver).executeScript("return document.readyState").toString()
+								.equals("complete");
+					}
+				});
+				// driver.manage().timeouts().pageLoadTimeout(25, TimeUnit.SECONDS);
+
+			} catch (Exception e) {
+				Common.logInfo("WebPage took more time to Load.");
+			}
 		}
 
 		/**
@@ -416,16 +549,9 @@ public class BaseUtils {
 		 */
 		public static void navigateToUrlOnANewTab(String URL) {
 
-			try {
 //				driver.switchTo().newWindow(WindowType.TAB);
-				driver.get(URL);
-				logInfo("Navigating to URL on new Tab");
-
-			} catch (Exception e) {
-				logInfo("Error Navigating to URL on a new Window");
-				common.cleanUp();
-
-			}
+			driver.get(URL);
+			logInfo("Navigating to URL on new Tab");
 
 		}
 
@@ -436,16 +562,9 @@ public class BaseUtils {
 		 */
 		public static void navigateToUrlOnANewWindow(String URL) {
 
-			try {
 //				driver.switchTo().newWindow(WindowType.WINDOW);
-				driver.get(URL);
-				logInfo("Navigating to URL on new Window");
-
-			} catch (Exception e) {
-				logInfo("Error Navigating to URL on a new Window");
-				common.cleanUp();
-
-			}
+			driver.get(URL);
+			logInfo("Navigating to URL on new Window");
 
 		}
 
@@ -479,6 +598,81 @@ public class BaseUtils {
 		}
 
 		/**
+		 * Switch from parent/current handle to child handle/Window
+		 */
+		public static void switchToHandle() {
+
+			String parentHandle = driver.getWindowHandle();
+
+			// Get all Handles
+
+			Set<String> handles = driver.getWindowHandles();
+
+			// Switching between handles
+
+			for (String handle : handles) {
+
+				if (!handle.equals(parentHandle)) {
+					Common.logInfo("Switching to another window");
+					driver.switchTo().window(handle);
+					break;
+				}
+			}
+
+		}
+
+		/**
+		 * Return to the parent Handle from the current Child Handle/Window after
+		 * closing the child window
+		 */
+		public static void returnToParentHandle() {
+			String currentHandle = driver.getWindowHandle();
+			String parentHandle = null;
+			// Get all Handles
+
+			Set<String> handles = driver.getWindowHandles();
+
+			// Switching between handles
+
+			for (String handle : handles) {
+
+				if (handle.equals(currentHandle)) {
+					Common.logInfo("Closing the child window");
+					driver.switchTo().window(handle).close();
+				} else {
+					parentHandle = handle;
+				}
+			}
+
+			driver.switchTo().window(parentHandle);
+			Common.logInfo("Switching to parent window");
+
+		}
+
+		/**
+		 * Method to refresh a page using keys--should be used only when refresh() is
+		 * not working
+		 */
+		public static void refreshPageUsingKeys() {
+			Actions actions = new Actions(driver);
+			actions.keyDown(Keys.CONTROL).sendKeys(Keys.F5).keyUp(Keys.CONTROL).perform();
+
+		}
+
+		/**
+		 * Select the text from the dropDown
+		 * 
+		 * @param element
+		 * @param textToBeSelected
+		 */
+		public static void selectFromDropdown(WebElement element, String textToBeSelected) {
+			Select select = new Select(element);
+			select.selectByVisibleText(textToBeSelected);
+			Common.logInfo(textToBeSelected + " selected");
+
+		}
+
+		/**
 		 * To create a new instance of Extent report.
 		 */
 		public static void getExtentReportInstance() {
@@ -504,28 +698,28 @@ public class BaseUtils {
 		}
 
 		public static void cleanUp() {
-			common.logInfo("This Test Step failed, Capturing Screenshot.");
+			Common.logInfo("This Test Step failed, Capturing Screenshot.");
 			String path = BaseUtils.Screenshot.takeScreenshot();
-			BaseUtils.common.getDriver().quit();
+			BaseUtils.Common.getDriver().quit();
 			test.log(LogStatus.FAIL, "Test Failed", path);
-			BaseUtils.common.getExtentReport().endTest(test);
-			BaseUtils.common.getExtentReport().flush();
+			BaseUtils.Common.getExtentReport().endTest(test);
+			BaseUtils.Common.getExtentReport().flush();
 		}
 
 		public static void cleanUpOnSuccess(String testname) {
 			String screenshotPath = BaseUtils.Screenshot.takeScreenshot();
-			BaseUtils.common.getDriver().quit();
+			BaseUtils.Common.getDriver().quit();
 			test.log(LogStatus.PASS, "Test Passed", screenshotPath);
-			BaseUtils.common.getExtentReport().endTest(test);
-			BaseUtils.common.getExtentReport().flush();
+			BaseUtils.Common.getExtentReport().endTest(test);
+			BaseUtils.Common.getExtentReport().flush();
 		}
 
 		public static void cleanUpOnSkip(String testname) {
 			String screenshotPath = BaseUtils.Screenshot.takeScreenshot();
-			BaseUtils.common.getDriver().quit();
+			BaseUtils.Common.getDriver().quit();
 			test.log(LogStatus.SKIP, "Test Skipped", screenshotPath);
-			BaseUtils.common.getExtentReport().endTest(test);
-			BaseUtils.common.getExtentReport().flush();
+			BaseUtils.Common.getExtentReport().endTest(test);
+			BaseUtils.Common.getExtentReport().flush();
 		}
 
 		/**
@@ -535,8 +729,27 @@ public class BaseUtils {
 			String screenshotPath = BaseUtils.Screenshot.takeScreenshot();// capture screenshot
 			driver.quit();
 			test.log(LogStatus.PASS, "Test Passed", screenshotPath);
-			BaseUtils.common.getExtentReport().endTest(test);
-			BaseUtils.common.getExtentReport().flush();
+			BaseUtils.Common.getExtentReport().endTest(test);
+			BaseUtils.Common.getExtentReport().flush();
+		}
+
+		/**
+		 * Method to perform Actions manually while putting the thread to sleep
+		 * 
+		 * @param timeToWait
+		 * @param Message
+		 */
+		public static void waitToPerformAction(long timeToWait, String Message) {
+			try {
+				Common.logInfo("Waiting for " + timeToWait + " Seconds");
+				Thread.sleep(timeToWait);
+				Common.logInfo(Message);
+
+			} catch (InterruptedException e) {
+				Common.logInfo("Exception/error during wait");
+				e.printStackTrace();
+			}
+
 		}
 
 		/**
@@ -566,6 +779,67 @@ public class BaseUtils {
 			test = extentreport.startTest(testName);
 			test.log(LogStatus.INFO, "Setting log report");
 			test.log(LogStatus.INFO, "Starting Test-" + testName);
+
+		}
+
+		/**
+		 * Scroll to View
+		 * 
+		 * @param offset
+		 */
+		public static void scrollToView(int offset) {
+			try {
+				JavascriptExecutor js = (JavascriptExecutor) driver;
+				js.executeScript("window.scrollBy(0," + offset + ")", "");
+				Common.logInfo(" Scroll Down");
+				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+			} catch (Exception e) {
+				Common.logInfo("Unable to Scroll Down");
+				Common.cleanUp();
+			}
+		}
+
+		/**
+		 * Scroll to the bottom of the WebPage
+		 * 
+		 * @param element
+		 */
+		public static void scrollToBottom(WebElement element) {
+
+			Common.logInfo("Scrolling to Bottom of the Page");
+			element.sendKeys(Keys.END);
+
+		}
+
+		/**
+		 * Scroll to the Top of the WebPage
+		 * 
+		 * @param element
+		 */
+		public static void scrollToTop(WebElement element) {
+
+			Common.logInfo("Scrolling to top of the Page");
+			element.sendKeys(Keys.HOME);
+
+		}
+
+		/**
+		 * Scroll to a specific WebElement view
+		 * 
+		 * @param element
+		 */
+		public static void scrollToView(WebElement element) {
+
+			try {
+				JavascriptExecutor js = (JavascriptExecutor) driver;
+				js.executeScript("arguments[0].scrollIntoView();", element);
+				Common.logInfo(" Scroll Down");
+				Thread.sleep(3000);
+				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+			} catch (Exception e) {
+				Common.logInfo("Unable to Scroll Down");
+				Common.cleanUp();
+			}
 
 		}
 
@@ -646,12 +920,509 @@ public class BaseUtils {
 	}
 
 	/**
-	 * Class with methods related to Locators
+	 * Class with actions related to WebElements
 	 * 
 	 * @author Faiz-Siddiqh
 	 *
 	 */
-	public static class locators {
+	public static class WebElements {
+		/**
+		 * Find Element inside a webElement in a DOM-Selenium version 4
+		 * 
+		 * @param element
+		 * @param locator
+		 * @return
+		 */
+		public static WebElement findElementInWebElement(WebElement element, String locator) {
+			WebElement elementToBeFound = null;
+			try {
+				elementToBeFound = element.findElement(By.xpath(locator));
+
+			} catch (Exception e) {
+				Common.logInfo("Element not found -" + locator);
+				Common.logInfo("Locator not supported or check type");
+				// Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+			Common.logInfo("Lookup for Element successful");
+			return elementToBeFound;
+		}
+
+		/**
+		 * Open A Link On new Tab
+		 * 
+		 * @param element -WebElement of the link that has to be opened in a new Tab of
+		 *                the browser
+		 */
+		public static void openLinkInNewTab(WebElement element) {
+			try {
+
+				String tab = Keys.chord(Keys.CONTROL, Keys.RETURN);
+				element.sendKeys(tab);
+				Common.logInfo("Opening link on a new Tab");
+
+			} catch (Exception e) {
+				Common.logInfo("Error while opening link in new Tab");
+				Common.cleanUp();
+			}
+
+		}
+
+		/**
+		 * Find Element by locator and type
+		 * 
+		 * @param locator
+		 * @param type
+		 * @return WebElement
+		 */
+		public static WebElement getElement(String locator, String type) {
+			WebElement element = null;
+			type = type.toLowerCase();
+			Common.logInfo("Lookup for Element-" + locator);
+			try {
+				if (type.equals("id")) {
+					element = driver.findElement(By.id(locator));
+				} else if (type.equals("xpath")) {
+					element = driver.findElement(By.xpath(locator));
+				} else if (type.equals("cssselector")) {
+					element = driver.findElement(By.cssSelector(locator));
+				} else if (type.equals("name")) {
+					element = driver.findElement(By.name(locator));
+				} else if (type.equals("classname")) {
+					element = driver.findElement(By.className(locator));
+				} else if (type.equals("tagname")) {
+					element = driver.findElement(By.tagName(locator));
+				} else if (type.equals("linktext")) {
+					element = driver.findElement(By.linkText(locator));
+				}
+			} catch (Exception e) {
+				Common.logInfo("Element not found -" + locator);
+				Common.logInfo("Locator not supported or check type");
+				// Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+			Common.logInfo("Lookup for Element successful");
+			return element;
+		}
+
+		/**
+		 * Find element by Xpath
+		 * 
+		 * @param locator
+		 * @return WebElement
+		 */
+		public static WebElement getElementByXpath(String locator) {
+			WebElement element = null;
+			try {
+				Common.logInfo("Lookup for Element-" + locator);
+				element = driver.findElement(By.xpath(locator));
+				Common.logInfo("Lookup for Element successful");
+
+			} catch (Exception e) {
+				Common.logInfo("Element not found -" + locator);
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+
+			return element;
+		}
+
+		/**
+		 * To check if the element is present and log the message
+		 * 
+		 * @param locator
+		 * @param message
+		 * @return true if the element is present else false
+		 */
+		public static boolean isElementPresent(String locator, String message) {
+			try {
+				if (getElementByXpath(locator).isDisplayed()) {
+					Common.logInfo(message);
+					return true;
+				}
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+
+			return false;
+		}
+
+		/**
+		 * To check if a WebElement is enabled or not
+		 * 
+		 * @param locator
+		 * @return
+		 */
+		public static boolean isElementEnabled(String locator) {
+			try {
+				if (getElementByXpath(locator).isEnabled()) {
+					Common.logInfo("Element is Enabled-" + locator);
+					return true;
+				}
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+
+			return false;
+		}
+
+		/**
+		 * wait for the element specified to be present based on visiblity of the
+		 * element
+		 * 
+		 * @param timeOutInSeconds
+		 * @param element
+		 * @param message
+		 */
+		public static void waitForTheElementToBePresent(long timeOutInSeconds, WebElement element, String message) {
+			try {
+				WebDriverWait wait = new WebDriverWait(driver, timeOutInSeconds);
+				wait.until(ExpectedConditions.visibilityOf(element));
+				Common.logInfo(message);
+			} catch (Exception e) {
+				Common.logInfo("Element is not present");
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+		}
+
+		/**
+		 * Wait for the element to be present .If the element is present on DOM
+		 * 
+		 * @param timeOutInSeconds
+		 * @param locator
+		 * @param message
+		 */
+		public static void waitForTheElementToBePresent(long timeOutInSeconds, String locator, String message) {
+			try {
+				WebDriverWait wait = new WebDriverWait(driver, timeOutInSeconds);
+				wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(Locators.getLocator(locator))));
+				Common.logInfo(message);
+			} catch (Exception e) {
+				Common.logInfo("Element is not present");
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+		}
+
+		/**
+		 * wait for the element to be clickable .
+		 * 
+		 * @param timeOutInSeconds
+		 * @param element
+		 */
+		public static void waitForTheElementToBeClickable(long timeOutInSeconds, WebElement element) {
+			try {
+				WebDriverWait wait = new WebDriverWait(driver, timeOutInSeconds);
+				wait.until(ExpectedConditions.elementToBeClickable(element));
+				Common.logInfo("Waiting for the element to be clickable");
+			} catch (Exception e) {
+				Common.logInfo("Element not clickable OR available");
+				Common.logInfo(e.getMessage());
+				// Common.cleanUp();
+			}
+		}
+
+		/**
+		 * Get List of WebELements based on the tagName .
+		 * 
+		 * @param element-WebElement
+		 * @param tagname
+		 * @return WebElements for the passed WebElements
+		 */
+		public static List<WebElement> getElementsByTagname(WebElement element, String tagname) {
+			try {
+				Common.logInfo("Lookup for Elements by tagName -" + tagname);
+				return element.findElements(By.tagName(tagname));
+			} catch (Exception e) {
+				Common.logInfo("Elements not found -check locator and type");
+				// Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+
+			return null;
+
+		}
+
+		/**
+		 * Get List of WebElements based on the locator and type specified
+		 * 
+		 * @param locator
+		 * @param type
+		 * @return list of Webelements for the specified locator
+		 */
+		public static List<WebElement> getElements(String locator, String type) {
+
+			type = type.toLowerCase();
+			List<WebElement> list = new ArrayList<WebElement>();
+			try {
+				if (type.equals("id")) {
+					list = driver.findElements(By.id(locator));
+
+				} else if (type.equals("xpath")) {
+					list = driver.findElements(By.xpath(locator));
+				} else if (type.equals("cssselector")) {
+					list = driver.findElements(By.cssSelector(locator));
+				} else if (type.equals("name")) {
+					list = driver.findElements(By.name(locator));
+				} else if (type.equals("classname")) {
+					list = driver.findElements(By.className(locator));
+				} else if (type.equals("tagname")) {
+					list = driver.findElements(By.tagName(locator));
+				} else if (type.equals("linktext")) {
+					list = driver.findElements(By.linkText(locator));
+				}
+			} catch (Exception e) {
+				Common.logInfo("Locator not supported or check type");
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+
+			Common.logInfo("Lookup for Elements successful");
+			return list;
+		}
+
+		/**
+		 * 
+		 * @param list
+		 * @param requiredText-Text to be clicked
+		 */
+		public static void findElementAndClick(List<WebElement> list, String requiredText) {
+			try {
+				for (WebElement eachElement : list) {
+					if (eachElement.getText().contains(requiredText)) {
+						clickAndWait(eachElement);
+						Common.logInfo("clicked on " + requiredText);
+						break;
+					}
+				}
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+
+		}
+
+		/**
+		 * To check if the WebElement is present in DOM and clickable .
+		 * 
+		 * @param element
+		 * @return boolean
+		 */
+		public static boolean isElementPresentAndClickable(WebElement element) {
+
+			if (element.isDisplayed() && element.isEnabled()) {
+				return true;
+			}
+
+			return false;
+		}
+
+		/**
+		 * Click And Wait on specific WebElement and Log the message in extent report
+		 * 
+		 * @param element
+		 * @param message
+		 */
+		public static void clickAndWait(WebElement element, String message) {
+			try {
+				waitForTheElementToBeClickable(10, element);
+				element.click();
+				Thread.sleep(4000);
+				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+				Common.logInfo(message);
+
+			} catch (Exception e) {
+				Common.logInfo("Element not clickable");
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+
+		}
+
+		/**
+		 * Click And Wait on the WebElement
+		 * 
+		 * @param element
+		 */
+		public static void clickAndWait(WebElement element) {
+			try {
+				element.click();
+				Thread.sleep(3000);
+				Common.logInfo("Click and Wait");
+				driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+//				driver.quit();
+//				extentreport.endTest(test);
+//				extentreport.flush();
+				Common.cleanUp();
+			}
+
+		}
+
+		/**
+		 * Click And Wait on the specified WebELement & Type and Wait the Keys .Log the
+		 * message to the report
+		 * 
+		 * @param element
+		 * @param keysToSend
+		 * @param message
+		 */
+		public static void clickAndTypeAndWait(WebElement element, String keysToSend, String message) {
+			try {
+				clickAndWait(element);
+				element.sendKeys(keysToSend);
+				Common.logInfo(message);
+				Thread.sleep(3000);
+				driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+		}
+
+		/**
+		 * Click And Clear an input or text Area field .
+		 * 
+		 * @param element
+		 * @param message
+		 */
+		public static void clickAndClearAndWait(WebElement element, String message) {
+			try {
+				clickAndWait(element);
+				element.clear();
+				Common.logInfo(message);
+				Thread.sleep(3000);
+				driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+		}
+
+		/**
+		 * Click And Clear And Type And Wait an input are text area field
+		 * 
+		 * @param element
+		 * @param keysToSend
+		 * @param message
+		 */
+		public static void clickAndClearAndTypeAndWait(WebElement element, String keysToSend, String message) {
+			try {
+				clickAndWait(element);
+				element.clear();
+				element.sendKeys(keysToSend);
+				Common.logInfo(message);
+				Thread.sleep(3000);
+				driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+		}
+
+		/**
+		 * Drag and Drop from a element to a specified element
+		 * 
+		 * @param fromElement
+		 * @param toElement
+		 */
+		public static void dragAndDrop(WebElement fromElement, WebElement toElement) {
+			try {
+				Actions action = new Actions(driver);
+				// 1)
+				action.dragAndDrop(fromElement, toElement).build().perform();
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+
+			/*
+			 * 2)
+			 * action.clickAndHold(fromElement).moveToElement(toElement).build().perform();
+			 */
+		}
+
+		/**
+		 * Slide a WebElement to a specific offset
+		 * 
+		 * @param sliderElement
+		 * @param xOffset
+		 * @param yOffset
+		 */
+		public static void slider(WebElement sliderElement, int xOffset, int yOffset) {
+			try {
+				Actions action = new Actions(driver);
+
+				action.dragAndDropBy(sliderElement, xOffset, yOffset).perform();
+				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+
+			} catch (Exception e) {
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+		}
+
+		/**
+		 * Hover a WebElement And Wait
+		 */
+		public static void hoverOverElement(WebElement element, String message) {
+			try {
+				Actions action = new Actions(driver);
+				action.moveToElement(element).perform();
+				Thread.sleep(3000);
+				Common.logInfo(message);
+			} catch (Exception e) {
+				Common.logInfo("Unable to hover over the element");
+				Common.cleanUp();
+			}
+
+		}
+
+		/**
+		 * Get the List of the clickable links from the current WebPage
+		 * 
+		 * @return list of All clickable WebElements.
+		 */
+		public static List<WebElement> clickableLinks() {
+
+			List<WebElement> linksToClick = new ArrayList<WebElement>();
+			List<WebElement> elements = driver.findElements(By.tagName("a"));
+			elements.addAll(driver.findElements(By.tagName("img")));
+
+			for (WebElement e : elements) {
+				if (e.getAttribute("href") != null) {
+					linksToClick.add(e);
+				}
+			}
+
+			return linksToClick;
+		}
+
+		/**
+		 * Check if the check box is selected
+		 * 
+		 * @param element
+		 * @return
+		 */
+		public static boolean isCheckBoxSelected(WebElement element) {
+
+			return element.isSelected();
+		}
+
+	}
+
+	/**
+	 * Class with methods related to Initialising and managing Locators
+	 * 
+	 * @author Faiz-Siddiqh
+	 *
+	 */
+	public static class Locators {
 		private static Document doc;
 		private static XPath xpath;
 		private static XPathExpression expr;
@@ -696,17 +1467,17 @@ public class BaseUtils {
 			try {
 				expr = xpath.compile("//element[@name='" + locatorname + "']/@*");
 				NodeList result = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-				common.logInfo("Get Locator for " + locatorname);
+				Common.logInfo("Get Locator for " + locatorname);
 				Attr attr = (Attr) result.item(0);
 				locator = attr.getNodeValue();
-				common.logInfo("Get Locator successful- " + locator);
+				Common.logInfo("Get Locator successful- " + locator);
 				// return attr.getTextContent();
 
 			} catch (XPathExpressionException e) {
 				// System.out.println("check the locatorname input value");
-				common.logInfo("Get Locator unsuccessful- " + locator);
-				// common.logInfo(e.getMessage());
-				BaseUtils.common.cleanUp();
+				Common.logInfo("Get Locator unsuccessful- " + locator);
+				// Common.logInfo(e.getMessage());
+				BaseUtils.Common.cleanUp();
 			}
 
 			return locator;
@@ -746,7 +1517,7 @@ public class BaseUtils {
 	 * @author Faiz-Siddiqh
 	 *
 	 */
-	public static class testData {
+	public static class TestData {
 		public static XSSFWorkbook ExcelWBook;
 		private static XSSFSheet ExcelWSheet;
 		public static String filePath;
@@ -799,17 +1570,17 @@ public class BaseUtils {
 					// matches the value in the cell
 					if (Cell.getStringCellValue().equals(methodName)
 							&& variableCell.getStringCellValue().equals(testVariable)) {
-						common.logInfo("LookUp for testdata -" + testVariable);
+						Common.logInfo("LookUp for testdata -" + testVariable);
 
 						if (variableValueCell.getCellType() == CellType.STRING) {
-							common.logInfo("LookUp for testdata " + testVariable + " successful.value = "
+							Common.logInfo("LookUp for testdata " + testVariable + " successful.value = "
 									+ variableValueCell.getStringCellValue());
 
 							return variableValueCell.getStringCellValue();
 
 						} else if (variableValueCell.getCellType() == CellType.NUMERIC) {
 
-							common.logInfo("LookUp for testdata " + testVariable + " successful.value = "
+							Common.logInfo("LookUp for testdata " + testVariable + " successful.value = "
 									+ String.valueOf(variableValueCell.getNumericCellValue()));
 							return String.valueOf(variableValueCell.getNumericCellValue());
 						}
@@ -818,12 +1589,12 @@ public class BaseUtils {
 					}
 
 				}
-				common.logInfo("LookUp for testdata failed.Testdata not found");
+				Common.logInfo("LookUp for testdata failed.Testdata not found");
 
 			} catch (Exception e) {
-				common.logInfo("LookUp for testdata failed.");
-				common.logInfo(e.getMessage());
-				common.cleanUp();
+				Common.logInfo("LookUp for testdata failed.");
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
 			}
 			return null;
 
@@ -837,7 +1608,7 @@ public class BaseUtils {
 	 * @author Faiz-Siddiqh
 	 *
 	 */
-	public static class alerts {
+	public static class Alerts {
 		private static Alert alert;
 
 		/**
@@ -984,6 +1755,15 @@ public class BaseUtils {
 		}
 
 		/**
+		 * Capture Screenshot at a specific instance and log it to the report
+		 */
+		public static void captureScreenshot() {
+			String screenshotPath = BaseUtils.Screenshot.takeScreenshot();
+			test.log(LogStatus.INFO, "Capturing ScreenShot", screenshotPath);
+
+		}
+
+		/**
 		 * 
 		 * @param length -length of the random string to be returned
 		 * @return a random string of length specified.
@@ -1003,174 +1783,10 @@ public class BaseUtils {
 	}
 
 	/**
-	 * Initial SETUP of the module -before class/suite .
-	 * 
-	 * @throws SAXException
-	 * @throws IOException
-	 */
-	public static void setUp(String moduleName) {
-
-		common.setModuleName(moduleName);
-		// setting up an extent report
-		common.getExtentReportInstance(); // setting up an extent report
-		/*
-		 * Setting up Locators File
-		 */
-
-		locators.setUpLocatorsFile();
-		testData.setTestFile(moduleName);
-
-		String isSelenoid = ProjectProperties.readFromGlobalConfigFile("RunOnGrid");
-		if (isSelenoid.toLowerCase().contains("yes")) {
-			GlobalLibrary.triggerDocker("StartUp");
-			GlobalLibrary.scaleUpBrowserInstances();
-		}
-
-	}
-
-	/**
-	 * SetUp the WEBDRIVER of the type specified in the config file . IMPLEMNETED
-	 * FOR CHROME AND FIREFOX BROWSERS ONLY AND FOR BOTH MAC OS AND WINDOWS
-	 */
-	public static void setUpDriver() {
-		String isSelenoid = ProjectProperties.readFromGlobalConfigFile("RunOnGrid");
-		if (isSelenoid.toLowerCase().contains("yes")) {
-			GlobalLibrary.setUpGridDriver();
-		} else {
-			BaseUtils.setUpLocalDriver();
-		}
-
-		driver.manage().window().maximize();
-		driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
-		common.logInfo("Maximizing the window");
-
-	}
-
-	/**
-	 * Setting up WebDriver on Local Machine .
-	 */
-	public static void setUpLocalDriver() {
-		// Load the properties file using this method which contains baseURL and
-		// WebDriverType
-		String driverLocation;
-		common.logInfo("Setting Up WebDriver");
-		String driverName = ProjectProperties.readFromGlobalConfigFile("driver");
-
-		// String baseURL = projectDetails.getProperty("baseURL");
-		common.logInfo("WebDriver chosen =" + driverName);
-
-		if (driverName.equalsIgnoreCase("Chrome")) {
-			// Set System Property to instantiate ChromeDriver with the path of
-			// chromedriver.
-
-			driverLocation = ProjectProperties.readFromGlobalConfigFile("chromedriver");
-			if (System.getProperty("os.name").startsWith("Windows")) {// the path varies for windows and Mac
-				System.setProperty("webdriver.chrome.driver", System.getProperty("user.dir") + driverLocation);
-			} else {
-				System.setProperty("webdriver.chrome.driver",
-						System.getProperty("user.dir") + driverLocation.replaceAll(".exe", ""));
-			}
-			// Set Options using for chrome using the below commented line
-
-			getChromeOptions();
-			ChromeOptions options = getChromeOptions();
-			driver = new ChromeDriver(options);
-
-			common.logInfo("Launching Chrome");
-
-		} else if (driverName.equalsIgnoreCase("FireFox")) {
-			// Set System Property to instantiate ChromeDriver with the path of
-			// firefoxdriver.
-			driverLocation = ProjectProperties.readFromGlobalConfigFile("firefoxdriver");
-
-			if (System.getProperty("os.name").startsWith("Windows")) // the path varies for windows and Mac
-				System.setProperty("webdriver.firefox.driver", System.getProperty("user.dir") + driverLocation);
-			else
-				System.setProperty("webdriver.firefox.driver",
-						System.getProperty("user.dir") + driverLocation.replaceAll(".exe", ""));
-
-			// Set Options using for Firefox
-
-			org.openqa.selenium.firefox.ProfilesIni profile = new org.openqa.selenium.firefox.ProfilesIni();
-			// FirefoxProfile Automationprofile = profile.getProfile("Automation");// Create
-			// a profile with Automation in
-			// Firefox on
-			// your machine
-			FirefoxOptions options = new FirefoxOptions();
-			// options.setProfile(Automationprofile);
-			driver = new FirefoxDriver(options);
-			common.logInfo("Launching Firefox");
-		}
-
-	}
-
-	/**
-	 * To return ChromeOptions with desired Capabilities as mentioned in
-	 * config.properties file
-	 * 
-	 * @return
-	 */
-	public static ChromeOptions getChromeOptions() {
-		String pageLoadStrategy = ProjectProperties.readFromGlobalConfigFile("PageLoadStrategy");
-		String browserState = ProjectProperties.readFromGlobalConfigFile("BrowserState");
-		ChromeOptions options = new ChromeOptions();
-		if (browserState.equalsIgnoreCase("headless"))
-			options.addArguments("--headless");
-		if (pageLoadStrategy.equalsIgnoreCase("Eager"))
-			options.setPageLoadStrategy(PageLoadStrategy.EAGER);
-		else if (pageLoadStrategy.equalsIgnoreCase("Normal"))
-			options.setPageLoadStrategy(PageLoadStrategy.NORMAL);
-		else
-			options.setPageLoadStrategy(PageLoadStrategy.NONE);
-
-		return options;
-	}
-
-	/**
-	 * Wait for the page to load completely
-	 */
-	public static void waitForThePageToLoad() {
-		try {
-			WebDriverWait wait = new WebDriverWait(driver, 30);
-
-			wait.until(new ExpectedCondition<Boolean>() {
-				public Boolean apply(WebDriver driver) {
-					common.logInfo("Waiting for page to Load Completely.");
-					return ((JavascriptExecutor) driver).executeScript("return document.readyState").toString()
-							.equals("complete");
-				}
-			});
-			// driver.manage().timeouts().pageLoadTimeout(25, TimeUnit.SECONDS);
-
-		} catch (Exception e) {
-			common.logInfo("WebPage took more time to Load.");
-			common.cleanUp();
-		}
-	}
-
-	/**
-	 * Capture Screenshot at a specific instance and log it to the report
-	 */
-	public static void captureScreenshot() {
-		String screenshotPath = BaseUtils.Screenshot.takeScreenshot();
-		test.log(LogStatus.INFO, "Capturing ScreenShot", screenshotPath);
-
-	}
-
-	/**
-	 * Capture Screenshot at a specific webelement and log it to the report
-	 */
-	public static void captureScreenshotAtWebElement(WebElement element) {
-		String screenshotPath = BaseUtils.Screenshot.takeScreenshot(element);
-		test.log(LogStatus.INFO, "Capturing ScreenShot at given element", screenshotPath);
-
-	}
-
-	/**
 	 * THIS IS A PROJECT SPECIFIC METHOD: To select date from the calender
 	 */
 	public static void selectDateFromCalender(WebElement calendericon, String dateToBeSelected) {
-		clickAndWait(calendericon);
+		BaseUtils.WebElements.clickAndWait(calendericon);
 		SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy");
 		try {
 			Date expectedDate = dateFormat.parse(dateToBeSelected);
@@ -1178,15 +1794,15 @@ public class BaseUtils {
 			String month = new SimpleDateFormat("MMM").format(expectedDate);
 			String year = new SimpleDateFormat("yyyy").format(expectedDate);
 
-			selectFromDropdown(BaseUtils.getElementByXpath(locators.getLocator("Riskpage-SelectDate-Month")), month);
-			selectFromDropdown(BaseUtils.getElementByXpath(
-					locators.getLocator("Riskpage-SelectDate-Month").replaceAll("month", "year")), year);
-			String dateLocator = locators.getLocator("Riskpage-SelectDate-Date").replaceAll("date", day);
-			clickAndWait(getElementByXpath(dateLocator));
+			BaseUtils.Common.selectFromDropdown(
+					BaseUtils.WebElements.getElementByXpath(Locators.getLocator("Riskpage-SelectDate-Month")), month);
+			BaseUtils.Common.selectFromDropdown(BaseUtils.WebElements.getElementByXpath(
+					Locators.getLocator("Riskpage-SelectDate-Month").replaceAll("month", "year")), year);
+			String dateLocator = Locators.getLocator("Riskpage-SelectDate-Date").replaceAll("date", day);
+			BaseUtils.WebElements.clickAndWait(BaseUtils.WebElements.getElementByXpath(dateLocator));
 
 		} catch (Exception ex) {
-			common.logInfo("Cannot fill the date");
-			common.cleanUp();
+			Common.logInfo("Cannot fill the date");
 		}
 
 	}
@@ -1211,650 +1827,31 @@ public class BaseUtils {
 			String expectedMonthYear = month + " " + year;
 			while (true) {
 
-				String displayDate = BaseUtils.getElementByXpath(locators.getLocator("Riskpage-SelectDate-Month"))
-						.getText()
+				String displayDate = BaseUtils.WebElements
+						.getElementByXpath(Locators.getLocator("Riskpage-SelectDate-Month")).getText()
 						+ " "
-						+ BaseUtils
+						+ BaseUtils.WebElements
 								.getElementByXpath(
-										locators.getLocator("Riskpage-SelectDate-Month").replaceAll("month", "year"))
+										Locators.getLocator("Riskpage-SelectDate-Month").replaceAll("month", "year"))
 								.getText();
 
 				if (expectedMonthYear.equals(displayDate)) {
-					String dateLocator = locators.getLocator("Riskpage-SelectDate-Date").replaceAll("date", day);
-					clickAndWait(getElementByXpath(dateLocator));
+					String dateLocator = Locators.getLocator("Riskpage-SelectDate-Date").replaceAll("date", day);
+					BaseUtils.WebElements.clickAndWait(BaseUtils.WebElements.getElementByXpath(dateLocator));
 					break;
 				} else if (expectedDate.compareTo(currentDate) > 0) {
-					clickAndWait(
-							BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("Riskpage-SelectDate-next")));
+					BaseUtils.WebElements.clickAndWait(BaseUtils.WebElements
+							.getElementByXpath(BaseUtils.Locators.getLocator("Riskpage-SelectDate-next")));
 				} else {
-					clickAndWait(
-							BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("Riskpage-SelectDate-prev")));
+					BaseUtils.WebElements.clickAndWait(BaseUtils.WebElements
+							.getElementByXpath(BaseUtils.Locators.getLocator("Riskpage-SelectDate-prev")));
 				}
 			}
 
 		} catch (Exception e) {
-			common.logInfo("Error selecting date from the calender");
-			common.cleanUp();
+			Common.logInfo("Error selecting date from the calender");
+			Common.cleanUp();
 		}
-	}
-
-	/**
-	 * Find Element inside a webElement in a DOM-Selenium version 4
-	 * 
-	 * @param element
-	 * @param locator
-	 * @return
-	 */
-	public static WebElement findElementInWebElement(WebElement element, String locator) {
-		WebElement elementToBeFound = null;
-		try {
-			elementToBeFound = element.findElement(By.xpath(locator));
-
-		} catch (Exception e) {
-			common.logInfo("Element not found -" + locator);
-			common.logInfo("Locator not supported or check type");
-			// common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-		common.logInfo("Lookup for Element successful");
-		return elementToBeFound;
-	}
-
-	/**
-	 * Open A Link On new Tab
-	 * 
-	 * @param element -WebElement of the link that has to be opened in a new Tab of
-	 *                the browser
-	 */
-	public static void openLinkInNewTab(WebElement element) {
-		try {
-
-			String tab = Keys.chord(Keys.CONTROL, Keys.RETURN);
-			element.sendKeys(tab);
-			common.logInfo("Opening link on a new Tab");
-
-		} catch (Exception e) {
-			common.logInfo("Error while opening link in new Tab");
-			common.cleanUp();
-		}
-
-	}
-
-	/**
-	 * Find Element by locator and type
-	 * 
-	 * @param locator
-	 * @param type
-	 * @return WebElement
-	 */
-	public static WebElement getElement(String locator, String type) {
-		WebElement element = null;
-		type = type.toLowerCase();
-		common.logInfo("Lookup for Element-" + locator);
-		try {
-			if (type.equals("id")) {
-				element = driver.findElement(By.id(locator));
-			} else if (type.equals("xpath")) {
-				element = driver.findElement(By.xpath(locator));
-			} else if (type.equals("cssselector")) {
-				element = driver.findElement(By.cssSelector(locator));
-			} else if (type.equals("name")) {
-				element = driver.findElement(By.name(locator));
-			} else if (type.equals("classname")) {
-				element = driver.findElement(By.className(locator));
-			} else if (type.equals("tagname")) {
-				element = driver.findElement(By.tagName(locator));
-			} else if (type.equals("linktext")) {
-				element = driver.findElement(By.linkText(locator));
-			}
-		} catch (Exception e) {
-			common.logInfo("Element not found -" + locator);
-			common.logInfo("Locator not supported or check type");
-			// common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-		common.logInfo("Lookup for Element successful");
-		return element;
-	}
-
-	/**
-	 * Find element by Xpath
-	 * 
-	 * @param locator
-	 * @return WebElement
-	 */
-	public static WebElement getElementByXpath(String locator) {
-		WebElement element = null;
-		try {
-			common.logInfo("Lookup for Element-" + locator);
-			element = driver.findElement(By.xpath(locator));
-			common.logInfo("Lookup for Element successful");
-
-		} catch (Exception e) {
-			common.logInfo("Element not found -" + locator);
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-		return element;
-	}
-
-	/**
-	 * To check if the element is present and log the message
-	 * 
-	 * @param locator
-	 * @param message
-	 * @return true if the element is present else false
-	 */
-	public static boolean isElementPresent(String locator, String message) {
-		try {
-			if (getElementByXpath(locator).isDisplayed()) {
-				common.logInfo(message);
-				return true;
-			}
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-		return false;
-	}
-
-	/**
-	 * To check if a WebElement is enabled or not
-	 * 
-	 * @param locator
-	 * @return
-	 */
-	public static boolean isElementEnabled(String locator) {
-		try {
-			if (getElementByXpath(locator).isEnabled()) {
-				common.logInfo("Element is Enabled-" + locator);
-				return true;
-			}
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-		return false;
-	}
-
-	/**
-	 * wait for the element specified to be present based on visiblity of the
-	 * element
-	 * 
-	 * @param timeOutInSeconds
-	 * @param element
-	 * @param message
-	 */
-	public static void waitForTheElementToBePresent(long timeOutInSeconds, WebElement element, String message) {
-		try {
-			WebDriverWait wait = new WebDriverWait(driver, timeOutInSeconds);
-			wait.until(ExpectedConditions.visibilityOf(element));
-			common.logInfo(message);
-		} catch (Exception e) {
-			common.logInfo("Element is not present");
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-	}
-
-	/**
-	 * Wait for the element to be present .If the element is present on DOM
-	 * 
-	 * @param timeOutInSeconds
-	 * @param locator
-	 * @param message
-	 */
-	public static void waitForTheElementToBePresent(long timeOutInSeconds, String locator, String message) {
-		try {
-			WebDriverWait wait = new WebDriverWait(driver, timeOutInSeconds);
-			wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath(locators.getLocator(locator))));
-			common.logInfo(message);
-		} catch (Exception e) {
-			common.logInfo("Element is not present");
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-	}
-
-	/**
-	 * wait for the element to be clickable .
-	 * 
-	 * @param timeOutInSeconds
-	 * @param element
-	 */
-	public static void waitForTheElementToBeClickable(long timeOutInSeconds, WebElement element) {
-		try {
-			WebDriverWait wait = new WebDriverWait(driver, timeOutInSeconds);
-			wait.until(ExpectedConditions.elementToBeClickable(element));
-			common.logInfo("Waiting for the element to be clickable");
-		} catch (Exception e) {
-			common.logInfo("Element not clickable OR available");
-			common.logInfo(e.getMessage());
-			// common.cleanUp();
-		}
-	}
-
-	/**
-	 * Get List of WebELements based on the tagName .
-	 * 
-	 * @param element-WebElement
-	 * @param tagname
-	 * @return WebElements for the passed WebElements
-	 */
-	public static List<WebElement> getElementsByTagname(WebElement element, String tagname) {
-		try {
-			common.logInfo("Lookup for Elements by tagName -" + tagname);
-			return element.findElements(By.tagName(tagname));
-		} catch (Exception e) {
-			common.logInfo("Elements not found -check locator and type");
-			// common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-		return null;
-
-	}
-
-	/**
-	 * Get List of WebElements based on the locator and type specified
-	 * 
-	 * @param locator
-	 * @param type
-	 * @return list of Webelements for the specified locator
-	 */
-	public static List<WebElement> getElements(String locator, String type) {
-
-		type = type.toLowerCase();
-		List<WebElement> list = new ArrayList<WebElement>();
-		try {
-			if (type.equals("id")) {
-				list = driver.findElements(By.id(locator));
-
-			} else if (type.equals("xpath")) {
-				list = driver.findElements(By.xpath(locator));
-			} else if (type.equals("cssselector")) {
-				list = driver.findElements(By.cssSelector(locator));
-			} else if (type.equals("name")) {
-				list = driver.findElements(By.name(locator));
-			} else if (type.equals("classname")) {
-				list = driver.findElements(By.className(locator));
-			} else if (type.equals("tagname")) {
-				list = driver.findElements(By.tagName(locator));
-			} else if (type.equals("linktext")) {
-				list = driver.findElements(By.linkText(locator));
-			}
-		} catch (Exception e) {
-			common.logInfo("Locator not supported or check type");
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-		common.logInfo("Lookup for Elements successful");
-		return list;
-	}
-
-	/**
-	 * 
-	 * @param list
-	 * @param requiredText-Text to be clicked
-	 */
-	public static void findElementAndClick(List<WebElement> list, String requiredText) {
-		try {
-			for (WebElement eachElement : list) {
-				if (eachElement.getText().contains(requiredText)) {
-					clickAndWait(eachElement);
-					common.logInfo("clicked on " + requiredText);
-					break;
-				}
-			}
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-	}
-
-	/**
-	 * To check if the WebElement is present in DOM and clickable .
-	 * 
-	 * @param element
-	 * @return boolean
-	 */
-	public static boolean isElementPresentAndClickable(WebElement element) {
-
-		if (element.isDisplayed() && element.isEnabled()) {
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Click And Wait on specific WebElement and Log the message in extent report
-	 * 
-	 * @param element
-	 * @param message
-	 */
-	public static void clickAndWait(WebElement element, String message) {
-		try {
-			waitForTheElementToBeClickable(10, element);
-			element.click();
-			Thread.sleep(4000);
-			driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-			common.logInfo(message);
-
-		} catch (Exception e) {
-			common.logInfo("Element not clickable");
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-	}
-
-	/**
-	 * Click And Wait on the WebElement
-	 * 
-	 * @param element
-	 */
-	public static void clickAndWait(WebElement element) {
-		try {
-			element.click();
-			Thread.sleep(3000);
-			common.logInfo("Click and Wait");
-			driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
-
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-//			driver.quit();
-//			extentreport.endTest(test);
-//			extentreport.flush();
-			common.cleanUp();
-		}
-
-	}
-
-	/**
-	 * Click And Wait on the specified WebELement & Type and Wait the Keys .Log the
-	 * message to the report
-	 * 
-	 * @param element
-	 * @param keysToSend
-	 * @param message
-	 */
-	public static void clickAndTypeAndWait(WebElement element, String keysToSend, String message) {
-		try {
-			clickAndWait(element);
-			element.sendKeys(keysToSend);
-			common.logInfo(message);
-			Thread.sleep(3000);
-			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-	}
-
-	/**
-	 * Click And Clear an input or text Area field .
-	 * 
-	 * @param element
-	 * @param message
-	 */
-	public static void clickAndClearAndWait(WebElement element, String message) {
-		try {
-			clickAndWait(element);
-			element.clear();
-			common.logInfo(message);
-			Thread.sleep(3000);
-			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-	}
-
-	/**
-	 * Method to refresh a page using keys--should be used only when refresh() is
-	 * not working
-	 */
-	public static void refreshPageUsingKeys() {
-		Actions actions = new Actions(driver);
-		actions.keyDown(Keys.CONTROL).sendKeys(Keys.F5).keyUp(Keys.CONTROL).perform();
-
-	}
-
-	/**
-	 * Click And Clear And Type And Wait an input are text area field
-	 * 
-	 * @param element
-	 * @param keysToSend
-	 * @param message
-	 */
-	public static void clickAndClearAndTypeAndWait(WebElement element, String keysToSend, String message) {
-		try {
-			clickAndWait(element);
-			element.clear();
-			element.sendKeys(keysToSend);
-			common.logInfo(message);
-			Thread.sleep(3000);
-			driver.manage().timeouts().implicitlyWait(3, TimeUnit.SECONDS);
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-	}
-
-	/**
-	 * Drag and Drop from a element to a specified element
-	 * 
-	 * @param fromElement
-	 * @param toElement
-	 */
-	public static void dragAndDrop(WebElement fromElement, WebElement toElement) {
-		try {
-			Actions action = new Actions(driver);
-			// 1)
-			action.dragAndDrop(fromElement, toElement).build().perform();
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-		/*
-		 * 2)
-		 * action.clickAndHold(fromElement).moveToElement(toElement).build().perform();
-		 */
-	}
-
-	/**
-	 * Slide a WebElement to a specific offset
-	 * 
-	 * @param sliderElement
-	 * @param xOffset
-	 * @param yOffset
-	 */
-	public static void slider(WebElement sliderElement, int xOffset, int yOffset) {
-		try {
-			Actions action = new Actions(driver);
-
-			action.dragAndDropBy(sliderElement, xOffset, yOffset).perform();
-			driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-	}
-
-	/**
-	 * Scroll to View
-	 * 
-	 * @param offset
-	 */
-	public static void scrollToView(int offset) {
-		try {
-			JavascriptExecutor js = (JavascriptExecutor) driver;
-			js.executeScript("window.scrollBy(0," + offset + ")", "");
-			common.logInfo(" Scroll Down");
-			driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		} catch (Exception e) {
-			common.logInfo("Unable to Scroll Down");
-			common.cleanUp();
-		}
-	}
-
-	/**
-	 * Scroll to the bottom of the WebPage
-	 * 
-	 * @param element
-	 */
-	public static void scrollToBottom(WebElement element) {
-
-		common.logInfo("Scrolling to Bottom of the Page");
-		element.sendKeys(Keys.END);
-
-	}
-
-	/**
-	 * Scroll to the Top of the WebPage
-	 * 
-	 * @param element
-	 */
-	public static void scrollToTop(WebElement element) {
-
-		common.logInfo("Scrolling to top of the Page");
-		element.sendKeys(Keys.HOME);
-
-	}
-
-	/**
-	 * Scroll to a specific WebElement view
-	 * 
-	 * @param element
-	 */
-	public static void scrollToView(WebElement element) {
-
-		try {
-			JavascriptExecutor js = (JavascriptExecutor) driver;
-			js.executeScript("arguments[0].scrollIntoView();", element);
-			common.logInfo(" Scroll Down");
-			Thread.sleep(3000);
-			driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-		} catch (Exception e) {
-			common.logInfo("Unable to Scroll Down");
-			common.cleanUp();
-		}
-
-	}
-
-	/**
-	 * Select the text from the dropDown
-	 * 
-	 * @param element
-	 * @param textToBeSelected
-	 */
-	public static void selectFromDropdown(WebElement element, String textToBeSelected) {
-		try {
-			Select select = new Select(element);
-			select.selectByVisibleText(textToBeSelected);
-			common.logInfo(textToBeSelected + " selected");
-
-		} catch (Exception e) {
-			common.logInfo(e.getMessage());
-			common.cleanUp();
-		}
-
-	}
-
-	/**
-	 * Switch from parent/current handle to child handle/Window
-	 */
-	public static void switchToHandle() {
-
-		String parentHandle = driver.getWindowHandle();
-
-		// Get all Handles
-
-		Set<String> handles = driver.getWindowHandles();
-
-		// Switching between handles
-
-		for (String handle : handles) {
-
-			if (!handle.equals(parentHandle)) {
-				common.logInfo("Switching to another window");
-				driver.switchTo().window(handle);
-				break;
-			}
-		}
-
-	}
-
-	/**
-	 * Hover a WebElement And Wait
-	 */
-	public static void hoverOverElement(WebElement element, String message) {
-		try {
-			Actions action = new Actions(driver);
-			action.moveToElement(element).perform();
-			Thread.sleep(3000);
-			common.logInfo(message);
-		} catch (Exception e) {
-			common.logInfo("Unable to hover over the element");
-			common.cleanUp();
-		}
-
-	}
-
-	/**
-	 * Get the List of the clickable links from the current WebPage
-	 * 
-	 * @return list of All clickable WebElements.
-	 */
-	public static List<WebElement> clickableLinks() {
-
-		List<WebElement> linksToClick = new ArrayList<WebElement>();
-		List<WebElement> elements = driver.findElements(By.tagName("a"));
-		elements.addAll(driver.findElements(By.tagName("img")));
-
-		for (WebElement e : elements) {
-			if (e.getAttribute("href") != null) {
-				linksToClick.add(e);
-			}
-		}
-
-		return linksToClick;
-	}
-
-	/**
-	 * Return to the parent Handle from the current Child Handle/Window after
-	 * closing the child window
-	 */
-	public static void returnToParentHandle() {
-		String currentHandle = driver.getWindowHandle();
-		String parentHandle = null;
-		// Get all Handles
-
-		Set<String> handles = driver.getWindowHandles();
-
-		// Switching between handles
-
-		for (String handle : handles) {
-
-			if (handle.equals(currentHandle)) {
-				common.logInfo("Closing the child window");
-				driver.switchTo().window(handle).close();
-			} else {
-				parentHandle = handle;
-			}
-		}
-
-		driver.switchTo().window(parentHandle);
-		common.logInfo("Switching to parent window");
-
 	}
 
 	/**
@@ -1870,36 +1867,6 @@ public class BaseUtils {
 		JsonPath jp = new JsonPath(response);// for parsing json
 		String value = jp.get(valueToBeExtracted);
 		return value;
-	}
-
-	/**
-	 * Check if the check box is selected
-	 * 
-	 * @param element
-	 * @return
-	 */
-	public static boolean isCheckBoxSelected(WebElement element) {
-
-		return element.isSelected();
-	}
-
-	/**
-	 * Method to perform Actions manually while putting the thread to sleep
-	 * 
-	 * @param timeToWait
-	 * @param Message
-	 */
-	public static void waitToPerformAction(long timeToWait, String Message) {
-		try {
-			common.logInfo("Waiting for " + timeToWait + " Seconds");
-			Thread.sleep(timeToWait);
-			common.logInfo(Message);
-
-		} catch (InterruptedException e) {
-			common.logInfo("Exception/error during wait");
-			e.printStackTrace();
-		}
-
 	}
 
 	/**

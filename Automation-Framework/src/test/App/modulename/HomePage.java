@@ -25,20 +25,24 @@ public class HomePage {
 	public void loginwithInvalidcredentials_20001(Method method) {
 		homepage.launchAndLogin(method.getName());
 
-		String email = BaseUtils.testData.getTestData("Email");
-		String password = BaseUtils.testData.getTestData("password");
+		String email = BaseUtils.TestData.getTestData("Email");
+		String password = BaseUtils.TestData.getTestData("password");
 
-		BaseUtils.clickAndWait(BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("homepage-login")),
+		BaseUtils.WebElements.clickAndWait(
+				BaseUtils.WebElements.getElementByXpath(BaseUtils.Locators.getLocator("homepage-login")),
 				"Click on Login Link button");
-		BaseUtils.switchToHandle();
-		assertTrue(BaseUtils.isElementPresent(BaseUtils.locators.getLocator("homepage-email"),
+		BaseUtils.Common.switchToHandle();
+		assertTrue(BaseUtils.WebElements.isElementPresent(BaseUtils.Locators.getLocator("homepage-email"),
 				"Checking if email field is present"), "Element not present");
 
-		BaseUtils.clickAndTypeAndWait(BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("homepage-email")),
-				email, "Click and Type email");
-		BaseUtils.clickAndTypeAndWait(BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("homepage-password")),
-				password, "Click and Type Password");
-		BaseUtils.clickAndWait(BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("login-btn")),
+		BaseUtils.WebElements.clickAndTypeAndWait(
+				BaseUtils.WebElements.getElementByXpath(BaseUtils.Locators.getLocator("homepage-email")), email,
+				"Click and Type email");
+		BaseUtils.WebElements.clickAndTypeAndWait(
+				BaseUtils.WebElements.getElementByXpath(BaseUtils.Locators.getLocator("homepage-password")), password,
+				"Click and Type Password");
+		BaseUtils.WebElements.clickAndWait(
+				BaseUtils.WebElements.getElementByXpath(BaseUtils.Locators.getLocator("login-btn")),
 				"Click on Login button");
 	}
 
@@ -46,12 +50,14 @@ public class HomePage {
 	public void navigateToHomePage_FrontEnd_20002(Method method) {
 		homepage.launchAndLogin(method.getName());
 
-		BaseUtils.clickAndWait(BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("homepage-Demo")),
+		BaseUtils.WebElements.clickAndWait(
+				BaseUtils.WebElements.getElementByXpath(BaseUtils.Locators.getLocator("homepage-Demo")),
 				"Click on Demo button");
-		BaseUtils.clickAndWait(BaseUtils.getElementByXpath(BaseUtils.locators.getLocator("Demo-Homepage-FrontEnd")),
+		BaseUtils.WebElements.clickAndWait(
+				BaseUtils.WebElements.getElementByXpath(BaseUtils.Locators.getLocator("Demo-Homepage-FrontEnd")),
 				"Click on HomePage-FrontEnd link-button");
-		BaseUtils.switchToHandle();
-		assertTrue(BaseUtils.isElementPresent(BaseUtils.locators.getLocator("Demo-FrontEnd-Hotels"),
+		BaseUtils.Common.switchToHandle();
+		assertTrue(BaseUtils.WebElements.isElementPresent(BaseUtils.Locators.getLocator("Demo-FrontEnd-Hotels"),
 				"Validating Travel Page is opened"), "Travels Page is not opened-Element not present");
 
 	}
@@ -59,11 +65,11 @@ public class HomePage {
 	@AfterMethod
 	public void cleanUp(ITestResult testresult) throws Exception {
 		if (testresult.getStatus() == ITestResult.FAILURE)
-			BaseUtils.common.cleanUp();
+			BaseUtils.Common.cleanUp();
 		else if (testresult.getStatus() == ITestResult.SUCCESS)
-			BaseUtils.common.cleanUpOnSuccess(testresult.getName());
+			BaseUtils.Common.cleanUpOnSuccess(testresult.getName());
 		else if (testresult.getStatus() == ITestResult.SKIP)
-			BaseUtils.common.cleanUpOnSkip(testresult.getName());
+			BaseUtils.Common.cleanUpOnSkip(testresult.getName());
 
 	}
 

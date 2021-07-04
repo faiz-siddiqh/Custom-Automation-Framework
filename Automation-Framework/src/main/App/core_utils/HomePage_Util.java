@@ -13,18 +13,16 @@ import com.relevantcodes.extentreports.LogStatus;
  */
 public class HomePage_Util {
 
-	public ExtentTest test = BaseUtils.common.getExtentTest();
-
 	public void setUp() throws SAXException, IOException {
-		BaseUtils.common.setClassName("HomePage-Test");
-		BaseUtils.setUp("HomePage");
+		BaseUtils.Common.setClassName("HomePage-Test");
+		BaseUtils.Common.setUp("HomePage");
 	}
 
 	public void launchAndLogin(String testName) {
-		BaseUtils.common.setMethodName(testName);
-		BaseUtils.common.setExtentTest(testName);		
-		BaseUtils.setUpDriver();
-		BaseUtils.common.appLogin();
+		BaseUtils.Common.setMethodName(testName);
+		BaseUtils.Common.setExtentTest(testName);		
+		BaseUtils.Common.setUpDriver();
+		BaseUtils.Common.appLogin();
 
 	}
 
