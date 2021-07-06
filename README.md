@@ -9,7 +9,7 @@ This Framework follows Data Driven Testing ,Reading the Locators from xml file.I
 The test artitecture will be uploaded soon so as to understand the framework better.
 
 Re-Run of failed testcases is also implemented.Just add the listener in the testscript.xml file and add Transformation class .
-Working on Merging UI ,Rest API,Mobile Testing generic methods into one framework .
+Working on Merging UI ,Rest API,Mobile Testing -generic methods into one core framework .
 
 
 ## Contributors
