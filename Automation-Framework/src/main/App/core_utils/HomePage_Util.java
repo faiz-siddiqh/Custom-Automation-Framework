@@ -22,7 +22,7 @@ public class HomePage_Util {
 		BaseUtils.Common.setMethodName(testName);
 		BaseUtils.Common.setExtentTest(testName);		
 		BaseUtils.Common.setUpDriver();
-		BaseUtils.Common.appLogin();
+		BaseUtils.Common.launchApp();
 
 	}
 

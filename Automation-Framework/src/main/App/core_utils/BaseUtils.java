@@ -83,7 +83,7 @@ public class BaseUtils {
 	 * @author Faiz-Siddiqh
 	 */
 
-	private static Properties properties = new Properties();
+	private static Properties properties;
 	private static RemoteWebDriver driver;
 	private static ExtentReports extentreport;
 	private static ExtentTest test;
@@ -481,32 +481,21 @@ public class BaseUtils {
 		/**
 		 * To Login to the baseURL of the App
 		 */
-		public static void appLogin() {
+		public static void launchApp() {
 			try {
 				String url = ProjectProperties.readFromGlobalConfigFile("URL");
 				logInfo("Fetching URl");
-				launch(url);
+				// Initiate driver if not present
+				if (driver == null)
+					BaseUtils.Common.setUpDriver();
+
+				navigateToUrl(url);
+				driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
+				waitForThePageToLoad();
 			} catch (Exception e) {
 				logInfo(e.getMessage());
 				cleanUp();
 			}
-
-		}
-
-		/**
-		 * To launch or Navigate to the specified url
-		 * 
-		 * @param url
-		 */
-		public static void launch(String url) {
-			// Initiate driver if not present
-			if (driver == null)
-				BaseUtils.Common.setUpDriver();
-
-			driver.get(url);
-			logInfo("Navigating to -" + url);
-			driver.manage().timeouts().implicitlyWait(5, TimeUnit.SECONDS);
-			waitForThePageToLoad();
 
 		}
 
