@@ -466,6 +466,8 @@ public class BaseUtils {
 			String pageLoadStrategy = ProjectProperties.readFromGlobalConfigFile("PageLoadStrategy");
 			String browserState = ProjectProperties.readFromGlobalConfigFile("BrowserState");
 			ChromeOptions options = new ChromeOptions();
+			options.addArguments("start-maximized");
+			options.addArguments("disable infobars");
 			if (browserState.equalsIgnoreCase("headless"))
 				options.addArguments("--headless");
 			if (pageLoadStrategy.equalsIgnoreCase("Eager"))
