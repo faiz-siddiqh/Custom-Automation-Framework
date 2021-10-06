@@ -1550,6 +1550,7 @@ public class BaseUtils {
 		 */
 		public static String getTestData(String testVariable) {
 			try {
+				ExcelWSheet = ExcelWBook.getSheet("Testdata");
 				// LOOPING THROUGH ALL THE ROWS OF THE EXCELSHEET
 				for (org.apache.poi.ss.usermodel.Row eachRow : ExcelWSheet) {
 
@@ -1591,6 +1592,54 @@ public class BaseUtils {
 
 		}
 
+		/**
+		 * Get the Value of A Global Variable Data from the TestData Excel File in
+		 * GLobal Variables Sheet
+		 * 
+		 * @param testVariable
+		 * @return
+		 */
+		public static String getGlobalVariableData(String testVariable) {
+			try {
+				ExcelWSheet = ExcelWBook.getSheet("Global Variables");
+
+				// LOOPING THROUGH ALL THE ROWS OF THE EXCELSHEET
+				for (org.apache.poi.ss.usermodel.Row eachRow : ExcelWSheet) {
+
+					XSSFCell Cell = (XSSFCell) eachRow.getCell(1); // GET CELL WHICH HAS METHOD NAME
+					XSSFCell variableValueCell = (XSSFCell) eachRow.getCell(2);// GET CELL WHICH HAS VARIABLE VALUE
+
+					// The value is fetched only if the current method name and variable name
+					// matches the value in the cell
+					if (Cell.getStringCellValue().equals(testVariable)) {
+
+						if (variableValueCell.getCellType() == CellType.STRING) {
+							Common.logInfo("LookUp for testdata " + testVariable + " successful.value = "
+									+ variableValueCell.getStringCellValue());
+
+							return variableValueCell.getStringCellValue();
+
+						} else if (variableValueCell.getCellType() == CellType.NUMERIC) {
+
+							Common.logInfo("LookUp for testdata " + testVariable + " successful.value = "
+									+ String.valueOf(variableValueCell.getNumericCellValue()));
+							return String.valueOf(variableValueCell.getNumericCellValue());
+						}
+
+						// THE TESTDATA FOR CELL TYPE OTHER THAN STRING OR NUMERIC HAS TO BE IMPLEMENTED
+					}
+
+				}
+				Common.logInfo("LookUp for testdata failed.Testdata not found");
+
+			} catch (Exception e) {
+				Common.logInfo("LookUp for testdata failed.");
+				Common.logInfo(e.getMessage());
+				Common.cleanUp();
+			}
+			return null;
+
+		}
 	}
 
 	/**
