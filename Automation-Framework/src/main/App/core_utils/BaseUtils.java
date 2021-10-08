@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -34,8 +35,14 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openqa.selenium.Alert;
@@ -1640,6 +1647,52 @@ public class BaseUtils {
 			return null;
 
 		}
+
+		/**
+		 * Store results in a excel file -created based on time Stamp on every run
+		 * 
+		 * @param results
+		 * @param sheetName
+		 */
+		public static void addResultsToExcel(List<String> results, String sheetName) {
+
+			String fileName = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss").format(new Date());
+			String resultsFilePath = System.getProperty("user.dir") + "//TestResults//" + moduleName + "//" + moduleName
+					+ fileName + ".xlsx";
+			try {
+				XSSFWorkbook resultsWorkBook = new XSSFWorkbook();
+				XSSFSheet resultsSheet = resultsWorkBook.createSheet(sheetName);
+
+				// Set column width
+				resultsSheet.setDefaultColumnWidth(50);
+
+				Row headerRow = resultsSheet.createRow(0);
+
+				CellStyle style = resultsWorkBook.createCellStyle();
+				XSSFFont font = resultsWorkBook.createFont();
+				font.setBold(true);
+				style.setFont(font);
+				style.setFillBackgroundColor(IndexedColors.GREEN.getIndex());
+				style.setFillPattern(FillPatternType.LEAST_DOTS);
+				style.setAlignment(HorizontalAlignment.CENTER);
+
+				int rowNum = 2;
+
+				for (int i = 0; i < results.size(); i++) {
+					Row eachRow = resultsSheet.createRow(rowNum++);
+
+					eachRow.createCell(0).setCellValue(results.get(i));
+				}
+				FileOutputStream fos = new FileOutputStream(resultsFilePath);
+				resultsWorkBook.write(fos);
+				fos.close();
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+		}
+
 	}
 
 	/**
