@@ -474,7 +474,14 @@ public class BaseUtils {
 			String browserState = ProjectProperties.readFromGlobalConfigFile("BrowserState");
 			ChromeOptions options = new ChromeOptions();
 			options.addArguments("start-maximized");
-			options.addArguments("disable infobars");
+			options.addArguments("--disable infobars");
+
+			// choosing particular profile to run tests
+			String chromeProfilePath = BaseUtils.ProjectProperties
+					.readFromGlobalConfigFile("Chrome-Automation-Profile");
+			if (chromeProfilePath != null)
+				options.addArguments("user-data-dir=" + chromeProfilePath);
+
 			if (browserState.equalsIgnoreCase("headless"))
 				options.addArguments("--headless");
 			if (pageLoadStrategy.equalsIgnoreCase("Eager"))
