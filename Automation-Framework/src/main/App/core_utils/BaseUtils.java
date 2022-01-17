@@ -92,7 +92,7 @@ public class BaseUtils {
 
 	private static Properties properties;
 	private static RemoteWebDriver driver;
-	private static ExtentReports extentreport;
+	private static ExtentReports extentreport = null;
 	private static ExtentTest test;
 	public static String className;
 	public static String moduleName;
@@ -687,24 +687,36 @@ public class BaseUtils {
 			// if the extent report already exists delete.else create a new directory of
 			// that
 			// module
-			if (resultsFile.exists()) {
-				resultsFile.delete();
+			if (extentreport == null) {
+
+				extentreport = new ExtentReports(path, true);
+
+				extentreport.addSystemInfo("Host Name", System.getProperty("user.name"));
+
+				extentreport.loadConfig(new File(System.getProperty("user.dir") + "/extent-config.xml"));
+
 			}
-			resultsFile.mkdir();
-			extentreport = new ExtentReports(path + "//" + "ExtentReport.html", false);// to create a new extent
-																						// report
-																						// for every module ,change
-																						// to
-																						// true.
-			extentreport.addSystemInfo("Selenium Version", "3.141.59").addSystemInfo("Platform", "Windows");
-			// extent.addSystemInfo("Selenium Version",
-			// "3.141.59").addSystemInfo("Platform", System.getProperty("os.name"));
+			// To check if an existing extent report exists and to replace it every time
+			/*
+			 * if (resultsFile.exists()) { resultsFile.delete(); } resultsFile.mkdir();
+			 * 
+			 * extentreport = new ExtentReports(path + "//" + "ExtentReport.html", false);//
+			 * to create a new extent // report // for every module ,change // to // true.
+			 * // extentreport.addSystemInfo("Selenium Version",
+			 * "3.141.59").addSystemInfo("Platform", "Windows");
+			 */
+			extentreport.addSystemInfo("Selenium Version", "3.141.59").addSystemInfo("Platform",
+					System.getProperty("os.name"));
 
 		}
 
+		/**
+		 * To clean Up based on testcase status after execution
+		 */
 		public static void cleanUp() {
 			Common.logInfo("This Test Step failed, Capturing Screenshot.");
 			String path = BaseUtils.Screenshot.takeScreenshot();
+
 			BaseUtils.Common.getDriver().quit();
 			test.log(LogStatus.FAIL, "Test Failed", path);
 			BaseUtils.Common.getExtentReport().endTest(test);
