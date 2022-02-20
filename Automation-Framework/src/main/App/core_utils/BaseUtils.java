@@ -168,10 +168,8 @@ public class BaseUtils {
 		public static boolean deleteAFile(String path) {
 
 			File fileToBeDeleted = new File(path);
-			if (fileToBeDeleted.exists())
-				return fileToBeDeleted.delete();
 
-			return false;
+			return (fileToBeDeleted.exists()) ? true : false;
 		}
 
 		/**
@@ -363,9 +361,6 @@ public class BaseUtils {
 
 		/**
 		 * Initial SETUP of the module -before class/suite .
-		 * 
-		 * @throws SAXException
-		 * @throws IOException
 		 */
 		public static void setUp(String moduleName) {
 
@@ -812,7 +807,6 @@ public class BaseUtils {
 				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 			} catch (Exception e) {
 				Common.logInfo("Unable to Scroll Down");
-				Common.cleanUp();
 			}
 		}
 
@@ -851,11 +845,8 @@ public class BaseUtils {
 				JavascriptExecutor js = (JavascriptExecutor) driver;
 				js.executeScript("arguments[0].scrollIntoView();", element);
 				Common.logInfo(" Scroll Down");
-				Thread.sleep(3000);
-				driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 			} catch (Exception e) {
 				Common.logInfo("Unable to Scroll Down");
-				Common.cleanUp();
 			}
 
 		}
@@ -958,8 +949,6 @@ public class BaseUtils {
 			} catch (Exception e) {
 				Common.logInfo("Element not found -" + locator);
 				Common.logInfo("Locator not supported or check type");
-				// Common.logInfo(e.getMessage());
-				Common.cleanUp();
 			}
 			Common.logInfo("Lookup for Element successful");
 			return elementToBeFound;
@@ -980,7 +969,6 @@ public class BaseUtils {
 
 			} catch (Exception e) {
 				Common.logInfo("Error while opening link in new Tab");
-				Common.cleanUp();
 			}
 
 		}
